@@ -1,0 +1,158 @@
+---
+title: "Association between ABO-related SVs and population genetic structure/clusters of Fp"
+author: "Daoming Wang"
+date: "2021/03/27"
+output:
+  html_document: 
+    theme: flatly
+    highlight: espresso
+    toc: true
+    toc_depth: 4
+    toc_float: true
+  word_document: default
+  pdf_document:
+    includes:
+      in_header: header.tex
+      keep_tex: yes
+      latex_engine: xelatex
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1 Preparation
+### 1.1 Import
+
+```{r 1.1, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+suppressMessages(source("functions.R"))
+```
+
+### 1.2 Inputs
+
+```{r 1.2, echo=TRUE}
+load("01.cleanData/full/all_msv_wsd_res.fp.RData")
+load("01.cleanData/assoc_SV/dsgv_full_abo.RData")
+load("01.cleanData/assoc_SV/vsgv_full_abo.RData")
+```
+
+## 2 Association between ABO-related SVs and population genetic strucuture of Fp
+
+### 2.1 PCoA
+```{r 2}
+sgv_full_abo<-cbind(dsgv_full_abo, vsgv_full_abo)
+
+all_msv_pcoa.fp<-all_msv_wsd_res.fp$pcoa
+sgv_full_abo.inter<-sgv_full_abo[match(rownames(all_msv_pcoa.fp),
+                                         rownames(sgv_full_abo)),]
+## correlation
+abo_F.prau_sv_pc<-matrix(NA, ncol = 4, nrow = ncol(sgv_full_abo.inter)*ncol(all_msv_pcoa.fp))
+for (i in 1:ncol(sgv_full_abo.inter)) {
+  for (j in 1:ncol(all_msv_pcoa.fp)) {
+#    i<-1
+#    j<-1
+    cor_res<-cor.test(sgv_full_abo.inter[,i], all_msv_pcoa.fp[,j],method = "spearman")
+    abo_F.prau_sv_pc[(i-1)*ncol(all_msv_pcoa.fp)+j,]<-c(colnames(sgv_full_abo.inter)[i], colnames(all_msv_pcoa.fp)[j],
+                                                             cor_res$estimate, cor_res$p.value)
+  }
+}
+abo_F.prau_sv_pc<-as.data.frame(abo_F.prau_sv_pc)
+colnames(abo_F.prau_sv_pc)<-c("SV", "PC", "R", "P")
+abo_F.prau_sv_pc$R<-as.numeric(abo_F.prau_sv_pc$R)
+abo_F.prau_sv_pc$P<-as.numeric(abo_F.prau_sv_pc$P)
+
+if(!dir.exists("03.SV_popStruct/")){dir.create("03.SV_popStruct/")}
+write.table(abo_F.prau_sv_pc, "03.SV_popStruct/abo_F.prau_sv_pc.tsv", sep = "\t",col.names = T, row.names = F, quote = F)
+
+## Visualization
+if(!dir.exists("03.SV_popStruct/")){dir.create("03.SV_popStruct/")}
+pdf("03.SV_popStruct/p_sv_fp_pcoa.pdf",width = 5, height = 5)
+for(i in 1:ncol(sgv_full_abo.inter)){
+#  i<-1
+  p_F.prau_pcoa<-ggplot(all_msv_pcoa.fp,aes(Axis.1,Axis.2, color = sgv_full_abo.inter[,i]))+
+    geom_point(size = 2,alpha = 0.5)+
+    xlab(paste("PCo1=",round(100*all_msv_wsd_res.fp$pcoa_res$values$Rel_corr_eig[1],digits = 2),"%",sep = ""))+
+    ylab(paste("PCo2=",round(100*all_msv_wsd_res.fp$pcoa_res$values$Rel_corr_eig[2],digits = 2),"%",sep = ""))+
+    ggtitle(colnames(sgv_full_abo.inter)[i])+
+    scale_color_distiller(palette = "Spectral")+
+    theme(plot.subtitle = element_text(vjust = 1), 
+          plot.caption = element_text(vjust = 1), 
+          axis.line.x =  element_line(),
+          axis.line.y = element_line(),
+          legend.position = 'right',
+          legend.title = element_blank(),
+          legend.key = element_rect(fill = NA), 
+          panel.grid.major = element_line(colour = NA),
+          panel.grid.minor = element_line(colour = NA),
+          panel.background = element_rect(fill = NA))
+  
+  print(p_F.prau_pcoa)
+  
+}
+dev.off()
+
+```
+
+### 2.2 Cluster
+
+```{r 2.2}
+all_msv_clu.fp<-all_msv_wsd_res.fp$clu_df
+write.table(all_msv_clu.fp, "03.SV_popStruct/all_msv_cluster_Fprau.tsv", sep = "\t",row.names = T, col.names = T, quote = F)
+
+mycolor2_green_blue  <- c("#2EC4B6","#235789")
+
+pdf("03.SV_popStruct/abo_F.prau_dsv_cluster.pdf",height = 2.5, width = 2.5)
+for (i in 1:(ncol(sgv_full_abo.inter)-1)) {
+#  i<-1
+  df<-data.frame(Cluster = all_msv_clu.fp$Cluster,
+                 SV = sgv_full_abo.inter[,i]) %>% na.omit
+  #table(df)
+  clu_sv_tbl <- table(df$Cluster,df$SV) 
+  chisq.test(clu_sv_tbl) 
+  df$Cluster<-as.factor(df$Cluster)
+  df$SV<-as.factor(df$SV)
+  
+  p_clu_sv<-ggplot(data=df)+
+  geom_mosaic(aes(x = product(Cluster), fill=SV))+
+    ylab(colnames(sgv_full_abo.inter)[i])+
+    xlab("Cluster")+
+    scale_fill_manual(values=mycolor2_green_blue) +
+    theme_tufte()+
+    theme(axis.ticks.length = unit(0, "cm"), 
+          #axis.text.x = element_text(angle = 45, hjust = 1),
+          #axis.text.y = element_text(size = 0.2), 
+          axis.title.y = element_text(size = 7),
+          legend.position = "none",
+          plot.title = element_text(hjust = 0.5))
+  
+  print(p_clu_sv)
+}
+dev.off()
+
+## vsv
+df<-data.frame(Cluster = as.factor(all_msv_clu.fp$Cluster),
+               SV = qtrans(sgv_full_abo.inter[,5])) %>% na.omit
+
+pdf("03.SV_popStruct/abo_F.prau_vsv_cluster.pdf",width = 3, height = 4)
+ggviolin(df, x = "Cluster", y = "SV", fill = "Cluster",color = "Cluster", 
+         #title = text_p,
+         #palette = blue_yellow_green_red, 
+         add.width = 1,width = 1,
+         add = "boxplot", add.params = list(fill = "white", width = 0.1))+
+  #scale_fill_manual(breaks = c(1,2),
+  #                  labels = c("1", "2"))+
+  #scale_x_discrete(breaks = c(1,2),
+  #                 labels = c("1", "2"))+
+  #scale_y_log10()+
+  xlab("Cluster")+
+  ylab(colnames(sgv_full_abo.inter)[5])+ 
+  theme_classic2()+
+  theme(legend.position = 'none',
+        #axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.y = element_text(size = 10),
+        plot.title = element_text(hjust = 0.5,size = 10))+
+  scale_fill_npg()+
+  scale_color_npg()
+dev.off()
+```

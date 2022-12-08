@@ -1,0 +1,143 @@
+---
+title: "GalNAc and diversity"
+author: "Daoming Wang"
+date: "2022/12/1"
+output:
+  html_document: 
+    theme: flatly
+    highlight: espresso
+    toc: true
+    toc_depth: 4
+    toc_float: true
+  word_document: default
+  pdf_document:
+    includes:
+      in_header: header.tex
+      keep_tex: yes
+      latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1 Preparation
+
+### 1.1 Import
+
+```{r 1.1, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+suppressMessages(source("functions.R"))
+```
+
+### 1.2 Inputs
+
+```{r 1.2, echo=TRUE}
+taxa.dag3 <- read.table("00.rawData/mbio/microbiome_8208samples_S_unfiltered.csv", check.names = F)[,-c(597)]
+taxa.f.dag3 <- read.table("00.rawData/mbio/microbiome_8208samples_F_unfiltered.csv", check.names = F)[,-c(90)]
+path.dag3 <- read.csv("00.rawData/mbio/DAG3_humann3_headersfixed_transposed_cleaned_normalized_v2.csv", row.names = "ID",check.names = F)
+gene.dag3 <- read.table("00.rawData/shortbred/shortbred_final.res", header = T,row.names = "Family", check.names = F) %>% t
+sv_anno   <- read.table("00.rawData/info/SV_577_579_anno.tsv", sep = "\t", header = T) %>% dplyr::filter(GalNAc_Step != "")
+load("01.cleanData/assoc_SV/dsgv_full_abo.RData")
+load("01.cleanData/blood_type/bt_dag3.RData")
+```
+
+### 1.3 Preparation
+
+```{r 1.3}
+bt_dag3 <- na.omit(bt_dag3)
+
+# Clean shortbred profile
+sv_anno$Gene_ID <- sv_anno$Gene_ID %>% str_replace_all("-", "_")
+colnames(gene.dag3) <- colnames(gene.dag3) %>% str_replace_all(".*HTF", "HTF")
+gene.dag3 <- sv_anno$Gene_ID %>% match(colnames(gene.dag3)) %>% gene.dag3[,.]
+colnames(gene.dag3) <- sv_anno$Gene_Label
+for (i in 1:9) { gene.dag3[,i] <- log(gene.dag3[,i]+1)}
+gene.dag3 <- as.data.frame(gene.dag3)
+
+# Sample intersection
+select.sample <- intersect(rownames(taxa.dag3), rownames(gene.dag3))
+select.sample <- intersect(select.sample, rownames(bt_dag3))
+
+
+taxa.dag3 <- taxa.dag3[select.sample,]
+taxa.f.dag3 <- taxa.f.dag3[select.sample,]
+path.dag3 <- path.dag3[select.sample,]
+gene.dag3 <- gene.dag3[select.sample,]
+dsgv.dag3 <- match(select.sample, rownames(dsgv_full_abo)) %>% dsgv_full_abo[.,]
+bt.dag3 <- bt_dag3[select.sample,]
+
+# Shorten the long taxonomy names, only keep the species names
+colnames(taxa.dag3) <- str_replace_all(colnames(taxa.dag3), ".*s__", "s__")
+colnames(taxa.f.dag3) <- str_replace_all(colnames(taxa.f.dag3), ".*f__", "f__")
+
+# Rescale the table, make sure the sum of each row is 1
+taxa.dag3 <- apply(taxa.dag3, 1, myfun<-function(x){x/sum(x)}) %>% t() %>% as.data.frame()
+taxa.f.dag3 <- apply(taxa.f.dag3, 1, myfun<-function(x){x/sum(x)}) %>% t() %>% as.data.frame()
+
+gene.order <- sv_anno$Gene_Label[order(sv_anno$GalNAc_Step)]
+```
+
+## 2 Diversity
+
+### 2.1 Diversity calculation
+
+```{r 2.1}
+# Calculate Shannon diversity using vegan's function, and count the species number (richness).
+mbio.alpha.dag3 <- data.frame(Shannon  = vegan::diversity(taxa.dag3, index="shannon"), 
+                              Richness = rowSums(taxa.dag3!=0))
+```
+
+### 2.2 Association between genes and diversity
+
+```{r 2.2}
+cov_df <- data.frame(SV_577_579 = dsgv.dag3$`Faecalibacterium cf. prausnitzii KLE1255:577_579`,
+                     F.prausnitzii = taxa.clr.filtered.dag3$s__Faecalibacterium_prausnitzii,
+                     C.aerofaciens = taxa.clr.filtered.dag3$s__Collinsella_aerofaciens,
+                     FUT2 = bt.dag3$FUT2_secretor_status,
+                     A_antigen = bt.dag3$A_antigen,
+                     B_antigen = bt.dag3$B_antigen)
+
+covar1 <- c("SV_577_579", "F.prausnitzii", "C.aerofaciens")
+
+alpha.gene.cor.galnac <- lm_btw_mats(mbio.alpha.dag3[bt.dag3$FUT2_secretor_status==1 & bt.dag3$A_antigen==1, ], 
+                              gene.dag3[bt.dag3$FUT2_secretor_status==1 & bt.dag3$A_antigen==1, ], 
+                              cov_df[bt.dag3$FUT2_secretor_status==1 & bt.dag3$A_antigen==1, ], covar1)
+alpha.gene.cor.noGalnac <- lm_btw_mats(mbio.alpha.dag3[bt.dag3$FUT2_secretor_status==0 | bt.dag3$A_antigen==0, ], 
+                              gene.dag3[bt.dag3$FUT2_secretor_status==0 | bt.dag3$A_antigen==0, ], 
+                              cov_df[bt.dag3$FUT2_secretor_status==0 | bt.dag3$A_antigen==0, ], covar1)
+alpha.gene.cor.merge <- rbind(data.frame(Group = "GalNAc-enriched", alpha.gene.cor.galnac),
+                              data.frame(Group = "GalNAc-depleted", alpha.gene.cor.noGalnac))
+
+if(!dir.exists("10.Shortbred")){dir.create("10.Shortbred")}
+write.table(alpha.gene.cor.merge, "10.Shortbred/alpha.gene.cor.merge.tsv", sep = "\t", row.names = F, col.names = T, quote = F)
+
+
+pdf("10.Shortbred/alpha.gene.bar.pdf", width = 5, height = 5)
+ggplot(alpha.gene.cor.merge, aes(x=X, y=Beta, group = Group) )+
+  geom_bar(aes(color = Group, fill = Group),width = 0.7,stat = 'identity',position = position_dodge(width = 0.8)) +
+  scale_color_manual(name=NULL,
+                     breaks = c("GalNAc-enriched", "GalNAc-depleted"),
+                     labels = c("GalNAc-enriched", "GalNAc-depleted"),
+                     values = rev(mycolor2_blue_red))+
+  scale_fill_manual(name=NULL,
+                    breaks = c("GalNAc-enriched", "GalNAc-depleted"),
+                    labels = c("GalNAc-enriched", "GalNAc-depleted"),
+                    values = rev(mycolor2_blue_red))+
+  xlab(NULL)+
+  ylab("Beta coefficient")+
+  scale_x_discrete(limits = gene.order)+
+  theme(plot.subtitle = element_text(vjust = 1), 
+        plot.caption = element_text(vjust = 1), 
+        plot.margin=unit(c(2,1,1,3),"cm"),
+        axis.line.x =  element_line(),
+        axis.line.y = element_line(),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position="top",
+        legend.key = element_rect(fill = NA), 
+        legend.text = element_text(size = 10),
+        panel.grid.major = element_line(colour = NA,linetype = "dashed",size = 0.25),
+        panel.grid.minor = element_line(colour = NA), 
+        panel.background = element_rect(fill = NA))+
+  facet_wrap(vars(Y), ncol = 1)
+dev.off()
+```

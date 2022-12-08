@@ -1,0 +1,69 @@
+---
+title: "Association between ABO-related SVs and population genetic structure/clusters of Fp"
+author: "Daoming Wang"
+date: "2021/03/27"
+output:
+  html_document: 
+    theme: flatly
+    highlight: espresso
+    toc: true
+    toc_depth: 4
+    toc_float: true
+  word_document: default
+  pdf_document:
+    includes:
+      in_header: header.tex
+      keep_tex: yes
+      latex_engine: xelatex
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1 Preparation
+### 1.1 Import
+
+```{r 1.1, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+suppressMessages(source("functions.R"))
+```
+
+### 1.2 Inputs
+
+```{r 1.2, echo=TRUE}
+load("01.cleanData/assoc_SV/dsgv_full_abo.RData")
+load("01.cleanData/assoc_SV/vsgv_full_abo.RData")
+```
+
+## 2 Association between ABO-related SVs of Fp
+
+### 2.1 PCoA
+```{r 2}
+sgv_full_abo<-cbind(dsgv_full_abo, vsgv_full_abo)
+
+## Between SV correlation
+sgv_full_abo.input<-sgv_full_abo
+colnames(sgv_full_abo.input) <-colnames(sgv_full_abo.input) %>% str_replace_all(".*\\:", "")
+F.prau_sv_corr<-rcorr(as.matrix(sgv_full_abo.input),type=c("spearman"))
+
+abo_sv<-apply(sgv_full_abo, 2, function(x){as.numeric(x)} )
+rownames(abo_sv)<-rownames(sgv_full_abo)
+F.prau_sv_corr.p<- cor.mtest(abo_sv, conf.level = 0.95, method = "spearman")
+
+library(reshape2)
+F.prau_sv_corr.df<-data.frame(melt(F.prau_sv_corr$r),
+                              P = melt(F.prau_sv_corr.p$p)[,3])
+
+if (!dir.exists("02.between_SVs")) {dir.create("02.between_SVs")}
+write.table(F.prau_sv_corr.df, "02.between_SVs/ABO_F.prau_sv_cor.tsv",
+            sep = "\t", col.names = T, row.names = F, quote = F)
+
+library(corrplot)
+if (!dir.exists("02.between_SVs")) {dir.create("02.between_SVs")}
+pdf("02.between_SVs/Between_Fp_abo_SVs.heatmap.pdf",width = 8, height = 8)
+corrplot(F.prau_sv_corr$r, p.mat = F.prau_sv_corr.p$p, sig.level = 0.05, type = "upper", order = "hclust", addrect = 2,
+         tl.col = "black", tl.srt = 45, tl.cex = 1.5,cl.cex = 1,
+         addCoef.col ='black', number.cex = 1.5)
+dev.off()
+```
