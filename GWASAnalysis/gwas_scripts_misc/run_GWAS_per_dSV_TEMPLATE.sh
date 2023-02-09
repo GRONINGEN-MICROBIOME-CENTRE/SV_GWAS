@@ -14,8 +14,8 @@ module load PLINK
 module load Metal
 
 svtype=dSV
-d="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/"
-script_dir="/home/umcg-dzhernakova/scripts_${svtype}/umcg_scripts_${svtype}/SV_GWAS/clean/gwas_scripts_misc/"
+d="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/"
+script_dir="${d}/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/"
 nperm=10
 
 
@@ -25,20 +25,20 @@ do
     echo $sv
     
     # get species name
-    sp=`grep -w "$sv" ${d}/data/sv_name_conversion_table.txt | cut -f4 | uniq` 
+    sp=`grep -w "$sv" ${d}/data/${svtype}_name_conversion_table.txt | cut -f4 | uniq` 
     all_nsamples=()
 
 	# create the output folder for meta-analysis results
-    meta_out_dir=${d}/v2/results/${svtype}/meta/${sv}/
+    meta_out_dir=${d}/results/${svtype}/meta/${sv}/
     meta_out_filebase=${meta_out_dir}/${sv}.meta_res
-    mkdir -p ${d}/v2/results/${svtype}/meta/${sv}/
+    mkdir -p ${d}/results/${svtype}/meta/${sv}/
 
 	# prepare metal script header
-    metal_script=${d}/v2/scripts_${svtype}/metal_per_sv/${sv}.metal.txt
-    cat ${d}/v2/scripts_${svtype}/metal_header.txt > $metal_script
+    metal_script=${d}/scripts/scripts_${svtype}/metal_per_sv/${sv}.metal.txt
+    cat ${d}/scripts/scripts_${svtype}/metal_header.txt > $metal_script
     for p in `seq 1 $nperm`
     do
-       cat ${d}/v2/scripts_${svtype}/metal_header.txt > ${d}/v2/scripts_${svtype}/metal_per_sv/${sv}.metal.perm${p}.txt
+       cat ${d}/scripts/scripts_${svtype}/metal_header.txt > ${d}/scripts/scripts_${svtype}/metal_per_sv/${sv}.metal.perm${p}.txt
     done
 
     # check in which cohorts the SV is present
@@ -49,7 +49,7 @@ do
     do
         echo -e "\n\nRunning the analysis for ${cohort}\n\n"
 
-        res_dir=${d}/v2/results/${svtype}/${cohort}/${sv}/
+        res_dir=${d}/results/${svtype}/${cohort}/${sv}/
         mkdir -p ${res_dir}/permutations/
 
         geno_file=${d}/genotypes/${cohort}/${cohort}_filtered
@@ -123,7 +123,7 @@ do
             rm ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.logistic 
             
             # append the per cohort result location to the metal script
-            echo -e "PROCESS\t${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.logistic.gz" >> ${d}/v2/scripts_${svtype}/metal_per_sv/${sv}.metal.perm${i}.txt
+            echo -e "PROCESS\t${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.logistic.gz" >> ${d}/scripts/scripts_${svtype}/metal_per_sv/${sv}.metal.perm${i}.txt
         done
     done
 
@@ -140,8 +140,8 @@ do
 	# Permuted GWAS meta-analysis
     for i in `seq 1 $nperm`
     do
-        echo -e "OUTFILE\t${meta_out_filebase}.perm${i} .tbl\nANALYZE\nQUIT" >>  ${d}/v2/scripts_${svtype}/metal_per_sv/${sv}.metal.perm${i}.txt
-        metal ${d}/v2/scripts_${svtype}/metal_per_sv/${sv}.metal.perm${i}.txt
+        echo -e "OUTFILE\t${meta_out_filebase}.perm${i} .tbl\nANALYZE\nQUIT" >>  ${d}/scripts/scripts_${svtype}/metal_per_sv/${sv}.metal.perm${i}.txt
+        metal ${d}/scripts/scripts_${svtype}/metal_per_sv/${sv}.metal.perm${i}.txt
         echo "${sv}, permutation $i metal return code: $?"
     done
     
@@ -149,6 +149,7 @@ do
     # remove per cohort results
     for cohort in ${cohorts_with_sv[@]}
     do 
+        res_dir=${d}/results/${svtype}/${cohort}/${sv}/
         rm ${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.logistic.gz
         rm ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm*.${sv}.glm.logistic.gz
     done
@@ -160,8 +161,8 @@ do
     
     tail -n+2 ${meta_out_filebase}1.tbl | \
     sort -k6g | \
-    python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2 \
-    > ${meta_out_filebase}.eQTLs.txt
+    python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2  | gzip -c \
+    > ${meta_out_filebase}.eQTLs.txt.gz
     
     tail -n+2  ${meta_out_filebase}1.tbl | sort -k6g | awk -v c=${cohorts_joined} -v s=${samplesize_joined} -v svname=${sv} 'BEGIN {FS=OFS="\t"}; {print svname,$0, c, s}' | gzip -c \
     > ${meta_out_filebase}.annot.tbl.gz
@@ -173,8 +174,8 @@ do
     do
         tail -n+2 ${meta_out_filebase}.perm${p}1.tbl | \
         sort -k6g | \
-        python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2 \
-        > ${meta_out_filebase}.eQTLs.perm${p}.txt
+        python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2 | gzip -c \
+        > ${meta_out_filebase}.eQTLs.perm${p}.txt.gz
         rm ${meta_out_filebase}.perm${p}1.tbl
     done
     

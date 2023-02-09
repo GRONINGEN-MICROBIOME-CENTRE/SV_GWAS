@@ -111,21 +111,21 @@ vSV
 
 #dSV
 svtype="dSV"
-mkdir ${d}/scripts_${svtype}/
-cd ${d}/scripts_${svtype}/
+mkdir ${d}/scripts/scripts_${svtype}/
+cd ${d}/scripts/scripts_${svtype}/
 cut -f1 ${d}/data/${svtype}_per_cohort.txt | tail -n+2 > all_bacs_${svtype}.txt
 rm *split*
 split -l$((`wc -l < all_bacs_${svtype}.txt`/40)) all_bacs_${svtype}.txt split. -da 2
 for f in split.*
 do
     sed "s:__BACLIST__:${f}:g" ${script_dir}//gwas_scripts_misc/run_GWAS_per_dSV_TEMPLATE.sh > run_${f}.sh
-    sbatch run_${f}.sh
+    #sbatch run_${f}.sh
 done
 
 #vSV
 svtype="vSV"
-mkdir ${d}/scripts_${svtype}/
-cd ${d}/scripts_${svtype}/
+mkdir ${d}/scripts/scripts_${svtype}/
+cd ${d}/scripts/scripts_${svtype}/
 cut -f1 ${d}/data/${svtype}_per_cohort.txt | tail -n+2 > all_bacs_${svtype}.txt
 rm *split*
 split -l$((`wc -l < all_bacs_${svtype}.txt`/40)) all_bacs_${svtype}.txt split. -da 2
