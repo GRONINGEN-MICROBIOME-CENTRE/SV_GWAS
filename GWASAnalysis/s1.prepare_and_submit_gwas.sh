@@ -6,7 +6,7 @@
 
 d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/
 script_dir=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/scripts/SV_GWAS/GWASAnalysis/
-genotype_dir=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/genotypes/
+genotype_dir=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/genotypes/
 
 cd ${d}/data/
 cohorts=("300OB" "500FG" "LLD" "DAG3")
@@ -34,22 +34,13 @@ vSV
 # 2. Format the covariate file: bind species abundances, genotype PCs and phenotypes (age, read number)
 #
 
-for cohort in ${cohorts[@]}
-do
-    
-    
-    echo "Counting samples for ${cohort}."
-    echo "N samples with SVs --- of them N with genotypes --- of them N with phenotypes --- of them N with both phenotypes and genotypes"
-    
-    python3 ${script_dir}/gwas_scripts_misc/check_sample_overlap.py sample_ids/${cohort}_samples_with_SVs.txt 0  ${genotype_dir}/${cohort}/${cohort}_filtered.fam 1 pheno/${cohort}_pheno.txt 0 "id\twith_geno\twith_pheno" > sample_ids/${cohort}_id_overlap.txt
-done
-
 cd ${d}/data/
 
 for cohort in ${cohorts[@]}
 do
     genotypeDir=${genotype_dir}/${cohort}/
-
+    sed -i "s:\tIID:\t#IID:g" ${genotypeDir}/${cohort}.PC1-2.txt
+    
     # 2.1 Gather age and read count for each cohort
     ${script_dir}/gwas_scripts_misc/add_columns_from_file.py -i sample_ids/${cohort}_samples_with_SVs.txt -f pheno/${cohort}_age.txt -f_cols 1 | cut -f1,4 | ${script_dir}/gwas_scripts_misc/add_columns_from_file.py -i stdin -f /groups/umcg-fu/tmp01/projects/SV_GWAS/data/SvUnfiltered/readPairNum/${cohort}.read_pair_number.tsv -f_cols 1 | grep -v "NA" | sed 1i"#IID\tage\tread_number" > pheno/${cohort}_pheno.txt
 
@@ -113,9 +104,11 @@ vSV
 svtype="dSV"
 mkdir ${d}/scripts/scripts_${svtype}/
 cd ${d}/scripts/scripts_${svtype}/
+mkdir logs
+
 cut -f1 ${d}/data/${svtype}_per_cohort.txt | tail -n+2 > all_bacs_${svtype}.txt
 rm *split*
-split -l$((`wc -l < all_bacs_${svtype}.txt`/40)) all_bacs_${svtype}.txt split. -da 2
+split -l$((`wc -l < all_bacs_${svtype}.txt`/80)) all_bacs_${svtype}.txt split. -da 2
 for f in split.*
 do
     sed "s:__BACLIST__:${f}:g" ${script_dir}//gwas_scripts_misc/run_GWAS_per_dSV_TEMPLATE.sh > run_${f}.sh
@@ -126,9 +119,11 @@ done
 svtype="vSV"
 mkdir ${d}/scripts/scripts_${svtype}/
 cd ${d}/scripts/scripts_${svtype}/
+mkdir logs
+
 cut -f1 ${d}/data/${svtype}_per_cohort.txt | tail -n+2 > all_bacs_${svtype}.txt
 rm *split*
-split -l$((`wc -l < all_bacs_${svtype}.txt`/40)) all_bacs_${svtype}.txt split. -da 2
+split -l$((`wc -l < all_bacs_${svtype}.txt`/80)) all_bacs_${svtype}.txt split. -da 2
 for f in split.*
 do
     sed "s:__BACLIST__:${f}:g" ${script_dir}//gwas_scripts_misc/run_GWAS_per_vSV_TEMPLATE.sh > run_${f}.sh
