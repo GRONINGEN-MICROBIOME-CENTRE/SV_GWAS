@@ -13,3 +13,6 @@ gcta=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-sandreusanchez/Im
 
 $gcta --bfile ${geno_file} --autosome --maf 0.05 --make-grm --out GRM_DAG3 --thread-num 2
 $gcta --grm GRM_DAG3 --make-bK 0.05 --out GRM_DAG3_bK
+
+cat "/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/genotypes/DAG3/GCTA/GRM_DAG3" > mgrm.txt
+cat "/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/genotypes/DAG3/GCTA/GRM_DAG3_bK" >> mgrm.txt" 
