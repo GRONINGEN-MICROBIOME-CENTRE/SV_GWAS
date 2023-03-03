@@ -3,7 +3,7 @@
 #SBATCH --output=logs/h2___BL__.out
 #SBATCH --error=logs/h2___BL__.err
 #SBATCH --mem=10gb
-#SBATCH --time=3:00:00
+#SBATCH --time=5:00:00
 #SBATCH --cpus-per-task=1
 
 gcta=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-sandreusanchez/Immuno_markers/Genetics/Heritability/Programs/gcta_1.93.2beta/gcta64

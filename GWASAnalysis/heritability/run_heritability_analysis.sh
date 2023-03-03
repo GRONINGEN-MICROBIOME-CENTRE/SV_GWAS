@@ -39,7 +39,7 @@ svtype=vSV
 mkdir -p ${d}/scripts/scripts_${svtype}/heritability/logs/
 cd ${d}/scripts/scripts_${svtype}/heritability/
 
-grep "DAG3" ${d}/data/${svtype}_per_cohort_all_cohorts.txt | cut -f1 | tail -n+2 > ${svtype}_per_cohort.DAG3.txt
+grep "DAG3" ${d}/data/${svtype}_per_cohort.txt | cut -f1 | tail -n+2 > ${svtype}_per_cohort.DAG3.txt
 
 #submit scripts
 while read line
@@ -75,7 +75,7 @@ svtype=dSV
 mkdir -p ${d}/scripts/scripts_${svtype}/heritability/logs/
 cd ${d}/scripts/scripts_${svtype}/heritability/
 
-grep "DAG3" ${d}/data/${svtype}_per_cohort_all_cohorts.txt | cut -f1 | tail -n+2 > ${svtype}_per_cohort.DAG3.txt
+grep "DAG3" ${d}/data/${svtype}_per_cohort.txt | cut -f1 | tail -n+2 > ${svtype}_per_cohort.DAG3.txt
 
 #submit scripts
 while read line

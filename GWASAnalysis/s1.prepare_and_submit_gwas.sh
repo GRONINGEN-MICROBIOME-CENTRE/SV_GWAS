@@ -107,13 +107,40 @@ cd ${d}/scripts/scripts_${svtype}/
 mkdir logs
 
 cut -f1 ${d}/data/${svtype}_per_cohort.txt | tail -n+2 > all_bacs_${svtype}.txt
-rm *split*
-split -l$((`wc -l < all_bacs_${svtype}.txt`/80)) all_bacs_${svtype}.txt split. -da 2
-for f in split.*
+
+while read line
+do 
+  sv="${line}"
+  echo $sv
+  sbatch \
+    -o logs/run_${sv}.out \
+    -e logs/run_${sv}.err \
+    -J dsv_${sv} \
+    ${script_dir}//gwas_scripts_misc/run_GWAS_per_dSV_TEMPLATE.sh "${sv}"
+done < all_bacs_${svtype}.txt
+
+
+# Check which SVs are missing
+result_dir=${d}/results/${svtype}/meta/
+while read line
 do
-    sed "s:__BACLIST__:${f}:g" ${script_dir}//gwas_scripts_misc/run_GWAS_per_dSV_TEMPLATE.sh > run_${f}.sh
-    #sbatch run_${f}.sh
-done
+    sv=$line
+    sv_resdir=${result_dir}/${sv}/
+    all_finished=1
+    if [ ! -f "${sv_resdir}/${sv}.meta_res.annot.tbl.gz"  ] ||  [ ! -f "${sv_resdir}/${sv}.meta_res.eQTLs.txt.gz" ]
+    then
+        echo -e "$sv\tmain results missing"
+    fi
+    for i in `seq 1 10`
+    do
+       if [ ! -f "${sv_resdir}/${sv}.meta_res.eQTLs.perm${i}.txt.gz"  ]
+        then
+            echo -e "$sv\t${i}th permutation results missing"
+        fi 
+    done
+    
+done < all_bacs_${svtype}.txt
+
 
 #vSV
 svtype="vSV"
@@ -122,10 +149,35 @@ cd ${d}/scripts/scripts_${svtype}/
 mkdir logs
 
 cut -f1 ${d}/data/${svtype}_per_cohort.txt | tail -n+2 > all_bacs_${svtype}.txt
-rm *split*
-split -l$((`wc -l < all_bacs_${svtype}.txt`/80)) all_bacs_${svtype}.txt split. -da 2
-for f in split.*
+while read line
+do 
+  sv="${line}"
+  echo $sv
+  sbatch \
+    -o logs/run_${sv}.out \
+    -e logs/run_${sv}.err \
+    -J dsv_${sv} \
+    ${script_dir}//gwas_scripts_misc/run_GWAS_per_dSV_TEMPLATE.sh "${sv}"
+done < all_bacs_${svtype}.txt
+
+# Check which SVs are missing
+result_dir=${d}/results/${svtype}/meta/
+while read line
 do
-    sed "s:__BACLIST__:${f}:g" ${script_dir}//gwas_scripts_misc/run_GWAS_per_vSV_TEMPLATE.sh > run_${f}.sh
-    sbatch run_${f}.sh
-done
+    sv=$line
+    sv_resdir=${result_dir}/${sv}/
+    all_finished=1
+    if [ ! -f "${sv_resdir}/${sv}.meta_res.annot.tbl.gz"  ] ||  [ ! -f "${sv_resdir}/${sv}.meta_res.eQTLs.txt.gz" ]
+    then
+        echo -e "$sv\tmain results missing"
+    fi
+    for i in `seq 1 10`
+    do
+       if [ ! -f "${sv_resdir}/${sv}.meta_res.eQTLs.perm${i}.txt.gz"  ]
+        then
+            echo -e "$sv\t${i}th permutation results missing"
+        fi 
+    done
+    
+done < all_bacs_${svtype}.txt
+
