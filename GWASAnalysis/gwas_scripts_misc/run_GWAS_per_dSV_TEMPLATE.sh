@@ -87,7 +87,7 @@ do
     echo "$sv real analysis plink return code: $?"    
     
     # Number of samples with association results for this SV for this cohort
-    n=`head -2 ${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.logistic | tail -1 | awk '{print $8}'`
+    n=`head -2 ${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.logistic | tail -1 | awk '{print $9}'`
     all_nsamples+=( $n )
     
     gzip ${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.logistic
