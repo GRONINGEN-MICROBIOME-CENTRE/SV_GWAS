@@ -2,7 +2,7 @@
 #SBATCH --job-name=SV___BACLIST__
 #SBATCH --output=logs/run_GWAS_SV___BACLIST__.out
 #SBATCH --error=logs/run_GWAS_SV___BACLIST__.err
-#SBATCH --time=6:00:00
+#SBATCH --time=3:00:00
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=10gb
 #SBATCH --nodes=1

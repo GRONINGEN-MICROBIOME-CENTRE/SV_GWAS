@@ -141,6 +141,9 @@ do
     
 done < all_bacs_${svtype}.txt
 
+# output jobs to rerun missing rounds
+python ${script_dir}/gwas_scripts_misc/get_missing_rounds.py failed.txt ${result_dir} | \
+  awk '{print "sbatch -o logs/run_" $1 ".out -e logs/run_" $1 ".err -J dsv_" $1 " ${script_dir}/gwas_scripts_misc/run_GWAS_dSV_specific_round.sh " $1 " " $2}'
 
 #vSV
 svtype="vSV"

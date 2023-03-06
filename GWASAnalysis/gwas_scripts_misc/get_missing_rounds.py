@@ -10,7 +10,7 @@ with open(sys.argv[1]) as sv_list:
         if not path.exists(sv_resdir + "/" + sv + ".meta_res.annot.tbl.gz") or not path.exists(sv_resdir + "/" + sv + ".meta_res.eQTLs.txt.gz"):
             print (sv + " 0")
             cur_sv = sv
-        for i in range(1,10):
+        for i in range(1,11):
             if not path.exists(sv_resdir + "/" + sv + ".meta_res.eQTLs.perm" + str(i) + ".txt.gz"):
                 if sv != cur_sv:
                     print (sv + " " + str(i - 1))
