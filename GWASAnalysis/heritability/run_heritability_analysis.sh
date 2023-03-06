@@ -63,7 +63,7 @@ do
 	p=`grep "Pval" ${d}/results/${svtype}/heritability/${sv}/${sv}_bKsK.hsq | awk '{print $2}'`
 	n=`tail -n 1 ${d}/results/${svtype}/heritability/${sv}/${sv}_bKsK.hsq | awk '{print $2}'`
 	echo "$sv $n $h $p"
-done < ${d}/data/${svtype}_per_cohort.DAG3.txt
+done < ${svtype}_per_cohort.DAG3.txt
 
 
 #
