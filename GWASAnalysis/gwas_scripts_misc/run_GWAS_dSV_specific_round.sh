@@ -171,7 +171,8 @@ else
             --out ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}
             
         echo "$sv permutation $i plink return code: $?"
-        
+        n=`head -2 ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.logistic | tail -1 | awk '{print $9}'`
+        all_nsamples+=( $n )
         gzip ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.logistic 
         
         # append the per cohort result location to the metal script

@@ -122,20 +122,20 @@ done < all_bacs_${svtype}.txt
 
 # Check which SVs are missing
 result_dir=${d}/results/${svtype}/meta/
+result_dir="/groups/umcg-fu/tmp01/projects/SV_GWAS/GWAS_tmp//results/dSV/meta/"
 while read line
 do
     sv=$line
     sv_resdir=${result_dir}/${sv}/
-    all_finished=1
     if [ ! -f "${sv_resdir}/${sv}.meta_res.annot.tbl.gz"  ] ||  [ ! -f "${sv_resdir}/${sv}.meta_res.eQTLs.txt.gz" ]
     then
-        echo -e "$sv\tmain results missing"
+        echo -e "$sv\t0"
     fi
     for i in `seq 1 10`
     do
        if [ ! -f "${sv_resdir}/${sv}.meta_res.eQTLs.perm${i}.txt.gz"  ]
         then
-            echo -e "$sv\t${i}th permutation results missing"
+            echo -e "$sv\t${i}"
         fi 
     done
     
