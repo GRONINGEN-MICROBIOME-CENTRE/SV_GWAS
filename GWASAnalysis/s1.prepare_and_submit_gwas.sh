@@ -142,8 +142,9 @@ do
 done < all_bacs_${svtype}.txt
 
 # output jobs to rerun missing rounds
+echo "script_dir=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/scripts/SV_GWAS/GWASAnalysis/" > submit_failed.sh 
 python ${script_dir}/gwas_scripts_misc/get_missing_rounds.py failed.txt ${result_dir} | \
-  awk '{print "sbatch -o logs/run_" $1 ".out -e logs/run_" $1 ".err -J dsv_" $1 " ${script_dir}/gwas_scripts_misc/run_GWAS_dSV_specific_round.sh " $1 " " $2}'
+  awk '{print "sbatch -o logs/rerun_" $1 "_" $2 ".out -e logs/rerun_" $1 "_" $2 ".err -J dsv_" $1 "_" $2 " ${script_dir}/gwas_scripts_misc/run_GWAS_dSV_specific_round.sh " $1 " " $2 "; sleep 1"}' >> submit_failed.sh 
 
 #vSV
 svtype="vSV"
