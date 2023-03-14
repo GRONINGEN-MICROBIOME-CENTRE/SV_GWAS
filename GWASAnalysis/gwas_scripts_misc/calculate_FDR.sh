@@ -9,24 +9,77 @@
 #SBATCH --open-mode=append
 #SBATCH --export=NONE
 #SBATCH --get-user-env=L
+#SBATCH --tmp=90gb
 
 d=$1
 svtype=$2
 
-meta_comb_dir=${d}/results_all_summary_stats/${svtype}/meta_combined_fdr/
+meta_comb_dir=${d}/results/${svtype}/meta_combined_fdr/
 nperm=10
 
 mkdir ${meta_comb_dir}
 echo -e "PValue\tSNPName\tSNPChr\tSNPChrPos\tProbeName\tProbeChr\tProbeCenterChrPos\tCisTrans\tSNPType\tAlleleAssessed\tOverallZScore\tDatasetsWhereSNPProbePairIsAvailableAndPassesQC\tDatasetsZScores\tDatasetsNrSamples\tIncludedDatasetsMeanProbeExpression\tIncludedDatasetsProbeExpressionVariance\tHGNCName\tIncludedDatasetsCorrelationCoefficient\tMeta-Beta (SE)\tBeta (SE)\tFoldChange\tFDR" \
 > ${TMPDIR}/eQTLs.txt
 
-sort -m -k1,1g -T $TMPDIR -S 70G --buffer-size=1000 ${d}/results_all_summary_stats/${svtype}/meta/*/*.meta_res..eQTLs.txt \
->> ${TMPDIR}/eQTLs.txt
+# real results
+while read line
+do
+    sp=$line
+    echo "Merging and sorting SVs of species $sp"
 
-head -1000001 ${TMPDIR}/eQTLs.txt | gzip -c > ${meta_comb_dir}/eQTLs.txt.gz
+    cmd="sort -m -k1,1g -T $TMPDIR -S 70G --buffer-size=1000 "
+    for input in ${d}/results/dSV/meta/${sp}:*/*.meta_res.eQTLs.txt.gz; do
+        cmd="$cmd <(gunzip -c '$input')"
+    done
+    echo $cmd
+    eval "$cmd" | gzip -c > ${TMPDIR}/${sp}.eQTLs.txt.gz   
+done < ${d}/data/${svtype}_species.txt
 
-# https://github.com/molgenis/systemsgenetics/wiki/QTL-mapping-pipeline
-java -Xmx80g -Xms80g -jar ${d}/eqtl-mapping-pipeline-1.3.9-SNAPSHOT/eqtl-mapping-pipeline.jar \
+echo "Merging and sorting all per species files"
+cmd="sort -m -k1,1g -T $TMPDIR -S 70G --buffer-size=1000 "
+for input in ${TMPDIR}/*.eQTLs.txt.gz; do
+    cmd="$cmd <(gunzip -c '$input')"
+done
+echo $cmd
+eval "$cmd" | head -1000001  >> ${TMPDIR}/eQTLs.txt 
+gzip -c ${TMPDIR}/eQTLs.txt  > ${meta_comb_dir}/eQTLs.txt.gz 
+
+rm ${TMPDIR}/*
+
+
+echo "permutations"
+for p in `seq 1 $nperm`
+do
+    echo "Perm ${p}"
+    echo -e "PValue\tSNPName\tSNPChr\tSNPChrPos\tProbeName\tProbeChr\tProbeCenterChrPos\tCisTrans\tSNPType\tAlleleAssessed\tOverallZScore\tDatasetsWhereSNPProbePairIsAvailableAndPassesQC\tDatasetsZScores\tDatasetsNrSamples\tIncludedDatasetsMeanProbeExpression\tIncludedDatasetsProbeExpressionVariance\tHGNCName\tIncludedDatasetsCorrelationCoefficient\tMeta-Beta (SE)\tBeta (SE)\tFoldChange\tFDR" \
+    > ${TMPDIR}/eQTLs.perm${p}.txt
+
+    while read line
+    do
+        sp=$line
+        echo "Merging and sorting permutation $p results of species $sp"
+        cmd="sort -m -k1,1g -T $TMPDIR -S 70G --buffer-size=1000 "
+        for input in ${d}/results/dSV/meta/${sp}:*/*.meta_res.eQTLs.perm${p}.txt.gz; do
+            cmd="$cmd <(gunzip -c '$input')"
+        done
+        echo $cmd
+        eval "$cmd" | gzip -c > ${TMPDIR}/${sp}.eQTLs.perm${p}.txt.gz    
+  
+    done < ${d}/data/${svtype}_species.txt
+    
+    echo "Merging and sorting all permutation $p for all species"
+    cmd="sort -m -k1,1g -T $TMPDIR -S 70G --buffer-size=1000 "
+    for input in ${TMPDIR}/*.eQTLs.perm${p}.txt.gz ; do
+        cmd="$cmd <(gunzip -c '$input')"
+    done
+    echo $cmd
+    eval "$cmd" | head -1000001  >> ${TMPDIR}/eQTLs.perm${p}.txt
+    gzip -c ${TMPDIR}/eQTLs.perm${p}.txt  > ${meta_comb_dir}/PermutedEQTLsPermutationRound${p}.txt.gz
+    rm ${TMPDIR}/*
+done
+
+
+java -Xmx80g -Xms80g -jar ~/tools/eqtl-mapping-pipeline-1.3.9-SNAPSHOT/eqtl-mapping-pipeline.jar \
 --mode util \
 --fdr \
 --in  ${meta_comb_dir} \
