@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=SV___BACLIST__
-#SBATCH --output=logs/run_GWAS_SV___BACLIST__.out
-#SBATCH --error=logs/run_GWAS_SV___BACLIST__.err
-#SBATCH --time=3:00:00
+#SBATCH --job-name=vSV_GWAS
+#SBATCH --output=logs/run_GWAS_vSV.out
+#SBATCH --error=logs/run_GWAS_vSV.err
+#SBATCH --time=0:30:00
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=10gb
 #SBATCH --nodes=1
@@ -113,11 +113,6 @@ then
     > ${meta_out_filebase}.annot.tbl.gz
 
     rm ${meta_out_filebase}1.tbl*
-
-    #tmp
-    echo "Size of the results meta dir: "
-    du -hs ${meta_out_dir}
-
 
 #
 # Permuted GWAS.
