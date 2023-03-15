@@ -32,6 +32,7 @@ meta_out_filebase=${meta_out_dir}/${sv}.meta_res
 mkdir -p ${d}/results/${svtype}/meta/${sv}/
 
 IFS=',' read -ra cohorts_with_sv <<< `grep -w $sv ${d}/data/${svtype}_per_cohort.txt | cut -f6`
+cohorts_joined=`printf -v var '%s,' "${cohorts_with_sv[@]}"; echo "${var%,}"`
 echo "Cohorts with SV: $cohorts_joined"
 
 if [ $svtype == "dSV" ]
@@ -93,7 +94,7 @@ then
         n=`head -2 ${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.${f_ext} | tail -1 | awk '{print $9}'`
         all_nsamples+=( $n )
     
-        gzip ${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.${f_ext}
+        gzip -f ${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.${f_ext}
     
         # append the per cohort result location to the metal script
         echo -e "PROCESS\t${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.${f_ext}.gz\n" >> $metal_script
@@ -118,10 +119,10 @@ then
 
     tail -n+2 ${meta_out_filebase}1.tbl | \
     sort -k6g | \
-    python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2  | gzip -c \
+    python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2  | gzip -fc \
     > ${meta_out_filebase}.eQTLs.txt.gz
 
-    tail -n+2  ${meta_out_filebase}1.tbl | sort -k6g | awk -v c=${cohorts_joined} -v s=${samplesize_joined} -v svname=${sv} 'BEGIN {FS=OFS="\t"}; {print svname,$0, c, s}' | gzip -c \
+    tail -n+2  ${meta_out_filebase}1.tbl | sort -k6g | awk -v c=${cohorts_joined} -v s=${samplesize_joined} -v svname=${sv} 'BEGIN {FS=OFS="\t"}; {print svname,$0, c, s}' | gzip -fc \
     > ${meta_out_filebase}.annot.tbl.gz
 
     rm ${meta_out_filebase}1.tbl*
@@ -174,7 +175,7 @@ else
         echo "$sv permutation $i plink return code: $?"
         n=`head -2 ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext} | tail -1 | awk '{print $9}'`
         all_nsamples+=( $n )
-        gzip ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext} 
+        gzip -f ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext} 
         
         # append the per cohort result location to the metal script
         echo -e "PROCESS\t${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext}.gz" >> ${d}/scripts/scripts_${svtype}/metal_per_sv/${sv}.metal.perm${i}.txt
@@ -199,7 +200,7 @@ else
 
     tail -n+2 ${meta_out_filebase}.perm${i}1.tbl | \
     sort -k6g | \
-    python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2 | gzip -c \
+    python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2 | gzip -cf \
     > ${meta_out_filebase}.eQTLs.perm${i}.txt.gz
     rm ${meta_out_filebase}.perm${i}1.tbl*
 
