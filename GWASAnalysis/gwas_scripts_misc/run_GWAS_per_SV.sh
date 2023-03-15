@@ -104,7 +104,7 @@ echo "file extension: $f_ext"
 #     n=`head -2 ${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.${f_ext} | tail -1 | awk '{print $9}'`
 #     all_nsamples+=( $n )
 #     
-#     gzip ${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.${f_ext}
+#     gzip -f ${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.${f_ext}
 #     
 #     # append the per cohort result location to the metal script
 #     echo -e "PROCESS\t${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.${f_ext}.gz\n" >> $metal_script
@@ -186,7 +186,7 @@ for i in `seq 1 $nperm`
         
         n=`head -2 ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext}  | tail -1 | awk '{print $9}'`
         all_nsamples+=( $n )
-        gzip ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext} 
+        gzip -f ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext} 
         
         # append the per cohort result location to the metal script
         echo -e "PROCESS\t${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext}.gz" >> ${d}/scripts/scripts_${svtype}/metal_per_sv/${sv}.metal.perm${i}.txt
