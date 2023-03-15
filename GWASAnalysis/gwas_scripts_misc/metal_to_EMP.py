@@ -66,7 +66,7 @@ for l in f:
             zscores += ";-1"
     
     # Skip results tested in less than 2 cohorts    
-    iif len(datasets.split(";")) < 2:
+    if len(datasets.split(";")) < 2:
         continue
     
     zscores = zscores.replace(";","", 1)
