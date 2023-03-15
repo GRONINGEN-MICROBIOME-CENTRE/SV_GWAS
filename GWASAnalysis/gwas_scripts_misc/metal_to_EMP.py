@@ -64,15 +64,14 @@ for l in f:
             datasets += ";" + dataset_names[i]
             samplesizes += ";" + dataset_samplesizes[i]
             zscores += ";-1"
-    
-    # Skip results tested in less than 2 cohorts    
-    if len(datasets.split(";")) < 2:
-        continue
-    
     zscores = zscores.replace(";","", 1)
     datasets = datasets.replace(";","", 1)
     samplesizes = samplesizes.replace(";","", 1)
     
+    # Skip results tested in less than 2 cohorts    
+    if len(datasets.split(";")) < 2:
+        continue
+        
     zscore = spl[4]
     empty_spl_cp = empty_out_spl[:]
     empty_spl_cp[0] = str(p)
