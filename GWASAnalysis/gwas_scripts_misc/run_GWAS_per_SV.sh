@@ -25,6 +25,7 @@ echo "sv=$sv, svtype=$svtype"
 
 # get species name
 sp=`grep -w "$sv" ${d}/data/${svtype}_name_conversion_table.txt | cut -f4 | uniq` 
+echo "Species name: $sp"
 all_nsamples=()
 
 # create the output folder for meta-analysis results
@@ -42,6 +43,8 @@ done
 
 # check in which cohorts the SV is present
 IFS=',' read -ra cohorts_with_sv <<< `grep -w $sv ${d}/data/${svtype}_per_cohort.txt | cut -f6`
+cohorts_joined=`printf -v var '%s,' "${cohorts_with_sv[@]}"; echo "${var%,}"`
+echo "Cohorts with SV: $cohorts_joined"
 
 if [ $svtype == "dSV" ]
 then
@@ -187,13 +190,7 @@ for i in `seq 1 $nperm`
         
         # append the per cohort result location to the metal script
         echo -e "PROCESS\t${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext}.gz" >> ${d}/scripts/scripts_${svtype}/metal_per_sv/${sv}.metal.perm${i}.txt
-    
-        #tmp
-        echo "Size of the results dir for $cohort: "
-        du -hs ${res_dir}
 
-        echo "Size of all results : "
-        du -hs ${d}/results/${svtype}
     done
     
     # Permuted GWAS meta-analysis
@@ -217,12 +214,7 @@ for i in `seq 1 $nperm`
     python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2 | gzip -c \
     > ${meta_out_filebase}.eQTLs.perm${i}.txt.gz
     rm ${meta_out_filebase}.perm${i}1.tbl*
-    
-    #tmp
-    echo "Size of the results meta dir: "
-    du -hs ${meta_out_dir}
-    echo "Size of all results : "
-    du -hs ${d}/results/${svtype}
+
 
 done
 
