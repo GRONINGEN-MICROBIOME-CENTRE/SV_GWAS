@@ -14,7 +14,7 @@ module load PLINK
 module load Metal
 
 
-d="/groups/umcg-fu/tmp01/projects/SV_GWAS/GWAS_tmp/"
+d="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/"
 script_dir="${d}/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/"
 nperm=10
 
