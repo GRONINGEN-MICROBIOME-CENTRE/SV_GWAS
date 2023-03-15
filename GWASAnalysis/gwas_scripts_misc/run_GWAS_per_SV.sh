@@ -184,7 +184,7 @@ for i in `seq 1 $nperm`
             
         echo "$sv permutation $i plink return code: $?"
         
-        n=`head -2 ${res_dir}/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext} | tail -1 | awk '{print $9}'`
+        n=`head -2 ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext}  | tail -1 | awk '{print $9}'`
         all_nsamples+=( $n )
         gzip ${res_dir}/permutations/${svtype}.${cohort}.${sv}.perm${i}.${sv}.glm.${f_ext} 
         
