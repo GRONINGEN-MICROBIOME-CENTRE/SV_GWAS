@@ -168,7 +168,7 @@ for (c in cs){
   #write filtered table
   d_flt2 <- cbind(a=0, d_flt)
   colnames(d_flt2)[1] <- "#FID"
-  write.table(d_flt, file = paste0("data_fastGWA/", c, ".", sv_type,".filtered.txt"), sep = "\t", quote = F, row.names = F) 
+  write.table(d_flt2, file = paste0("data_fastGWA/", c, ".", sv_type,".filtered.txt"), sep = "\t", quote = F, row.names = F) 
 }
 
 
