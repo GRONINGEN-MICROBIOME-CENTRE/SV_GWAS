@@ -89,7 +89,7 @@ do
     echo "$sv fastGWA return code: $?"    
     
     # Number of samples with association results for this SV for this cohort
-    n=`head -2 ${res_dir}/${sv}.gz | tail -1 | awk '{print $6}'`
+    n=`head -2 ${res_dir}/${sv}.fastGWA | tail -1 | awk '{print $6}'`
     all_nsamples+=( $n )
     
     gzip -f ${res_dir}/${sv}.fastGWA
