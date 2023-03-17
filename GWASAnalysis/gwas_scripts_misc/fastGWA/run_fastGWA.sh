@@ -2,7 +2,7 @@
 #SBATCH --job-name=SV
 #SBATCH --output=logs/run_GWAS.out
 #SBATCH --error=logs/run_GWAS_.err
-#SBATCH --time=6:00:00
+#SBATCH --time=00:30:00
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=10gb
 #SBATCH --nodes=1
@@ -110,19 +110,19 @@ echo "${sv}, real analysis metal return code: $?"
 for cohort in ${cohorts_with_sv[@]}
 do 
     res_dir=${d}/results_fastGWA/${svtype}/${cohort}/${sv}/
-    rm ${res_dir}/${svtype}.${cohort}.${sv}.${sv}.glm.${f_ext}.gz
+    rm ${res_dir}/${sv}.fastGWA.gz
 done
 
 # Convert to EMP
 cohorts_joined=`printf -v var '%s,' "${cohorts_with_sv[@]}"; echo "${var%,}"`
 samplesize_joined=`printf -v var '%s,' "${all_nsamples[@]}"; echo "${var%,}"`
 
-tail -n+2 ${meta_out_filebase}1.tbl | \
-sort -k6g | \
-python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2  | gzip -c \
-> ${meta_out_filebase}.eQTLs.txt.gz
+#tail -n+2 ${meta_out_filebase}1.tbl | \
+#sort -k6g | \
+#python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2  | gzip -c \
+#> ${meta_out_filebase}.eQTLs.txt.gz
 
-tail -n+2  ${meta_out_filebase}1.tbl | sort -k13,13g | awk -v c=${cohorts_joined} -v s=${samplesize_joined} -v svname=${sv} 'BEGIN {FS=OFS="\t"}; {print svname,$0, c, s}' | gzip -c \
+tail -n+2  ${meta_out_filebase}1.tbl | sort -k6,6g | awk -v c=${cohorts_joined} -v s=${samplesize_joined} -v svname=${sv} 'BEGIN {FS=OFS="\t"}; {print svname,$0, c, s}' | gzip -c \
 > ${meta_out_filebase}.annot.tbl.gz
 
 rm ${meta_out_filebase}1.tbl*
