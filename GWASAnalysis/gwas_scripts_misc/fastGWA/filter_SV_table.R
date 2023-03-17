@@ -131,10 +131,10 @@ for (c in cs){
   if (c == "300-OB") c = "300OB"
   
   # get samples with genotype and covariate data
-  geno <- read.delim(paste0("data_fastGWA/",c, ".covariates.txt") , header = T, sep = "\t", as.is = T, check.names = F, row.names = 1)
+  geno <- read.delim(paste0("data_fastGWA/",c, ".covariates.txt") , header = T, sep = "\t", as.is = T, check.names = F)
   cat("Number of samples with dSVs: ", nrow(d_cohort), "\n")
   cat("Number of samples with genotypes and covariates: ", nrow(geno), "\n")
-  sample_overlap <- row.names(d_cohort)[row.names(d_cohort) %in% row.names(geno)]
+  sample_overlap <- row.names(d_cohort)[row.names(d_cohort) %in% geno$IID]
   cat ("Number overlapping samples: ", length(sample_overlap), "\n")
   d_cohort <- d_cohort[row.names(d_cohort) %in% sample_overlap,]
   
@@ -166,6 +166,8 @@ for (c in cs){
   d_flt <- d_flt %>% 
     rownames_to_column(var = "#IID")
   #write filtered table
+  d_flt2 <- cbind(a=0, d_flt)
+  colnames(d_flt2)[1] <- "#FID"
   write.table(d_flt, file = paste0("data_fastGWA/", c, ".", sv_type,".filtered.txt"), sep = "\t", quote = F, row.names = F) 
 }
 
