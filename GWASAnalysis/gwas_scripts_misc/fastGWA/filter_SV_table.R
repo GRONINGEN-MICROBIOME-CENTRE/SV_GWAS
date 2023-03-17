@@ -146,8 +146,8 @@ for (c in cs){
     sv_per_cohort[row.names(sv_per_cohort) %in% colnames(d_flt), c] <- 1
   
     #change 0/1 into 1/2
-    d_flt[] <- lapply(as.data.frame(d_flt), function(x) sub(1,2,x))
-    d_flt[] <- lapply(as.data.frame(d_flt), function(x) sub(0,1,x))
+    #d_flt[] <- lapply(as.data.frame(d_flt), function(x) sub(1,2,x))
+    #d_flt[] <- lapply(as.data.frame(d_flt), function(x) sub(0,1,x))
   } else if (sv_type == "vSV"){
     d_flt <- run_qc_per_vsv(d_cohort, c, paste0("data_fastGWA/QC/", c, ".vSV_filtering"))
     d_flt <- run_qc_per_sample(d_flt, c, paste0("data_fastGWA/QC/", c, ".vSV_filtering"))
