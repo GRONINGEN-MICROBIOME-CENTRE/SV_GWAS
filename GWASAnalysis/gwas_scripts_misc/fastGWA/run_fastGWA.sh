@@ -122,8 +122,10 @@ samplesize_joined=`printf -v var '%s,' "${all_nsamples[@]}"; echo "${var%,}"`
 #python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2  | gzip -c \
 #> ${meta_out_filebase}.eQTLs.txt.gz
 
-tail -n+2  ${meta_out_filebase}1.tbl | sort -k6,6g | awk -v c=${cohorts_joined} -v s=${samplesize_joined} -v svname=${sv} 'BEGIN {FS=OFS="\t"}; {print svname,$0, c, s}' | gzip -c \
+tail -n+2  ${meta_out_filebase}1.tbl | sort -k6,6g | awk -v c=${cohorts_joined} -v s=${samplesize_joined} -v svname=${sv} 'BEGIN {FS=OFS="\t"}; {print svname,$0, c, s}' | gzip -cf \
 > ${meta_out_filebase}.annot.tbl.gz
+
+zcat ${meta_out_filebase}.annot.tbl.gz | awk '{FS=OFS="\t"}; {if ($7 < 5e-8) print}' | gzip -cf > ${meta_out_filebase}.annot.5e-8.tbl.gz
 
 rm ${meta_out_filebase}1.tbl*
 
