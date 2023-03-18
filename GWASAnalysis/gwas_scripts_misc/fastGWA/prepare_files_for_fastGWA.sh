@@ -100,3 +100,54 @@ do
     $gcta --grm $grm --make-bK-sparse 0.05 --out ${grm}_sparse 
 
 done
+
+
+
+
+svtype="dSV"
+cd ${d}/scripts/scripts_fastGWA_${svtype}
+
+cut -f1 ${d}/data_fastGWA/${svtype}_per_cohort.txt | tail -n+2 > all_bacs.${svtype}.txt
+while read line
+do 
+  sv="${line}"
+  echo $sv
+  sbatch \
+    -o logs/run_${sv}.out \
+    -e logs/run_${sv}.err \
+    -J dsv_${sv} \
+    -t 00:30:00 \
+    ${script_dir}/fastGWA/run_fastGWA.sh $sv $svtype
+done < all_bacs.${svtype}.txt
+
+svtype="vSV"
+cd ${d}/scripts/scripts_fastGWA_${svtype}
+
+cut -f1 ${d}/data_fastGWA/${svtype}_per_cohort.txt | tail -n+2 > all_bacs.${svtype}.txt
+while read line
+do 
+  sv="${line}"
+  echo $sv
+  sbatch \
+    -o logs/run_${sv}.out \
+    -e logs/run_${sv}.err \
+    -J dsv_${sv} \
+    -t 00:20:00 \
+    ${script_dir}/fastGWA/run_fastGWA.sh $sv $svtype
+done < all_bacs.${svtype}.txt
+
+
+
+result_dir="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/results_fastGWA/${svtype}/meta/"
+while read line
+do
+    sv=$line
+    sv_resdir=${result_dir}/${sv}/
+    if [ ! -f "${sv_resdir}/${sv}.meta_res.annot.tbl.gz"  ] ||  [ ! -f "${sv_resdir}/${sv}.meta_res.annot.5e-8.tbl.gz" ] 
+    then
+        echo -e "$sv"
+    elif [ `ls -l ${sv_resdir}/${sv}.meta_res.annot.tbl.gz | awk '{print $5}'` -lt 10000 ]
+    then
+       	echo -e "$sv"
+    fi     
+done < all_bacs.${svtype}.txt

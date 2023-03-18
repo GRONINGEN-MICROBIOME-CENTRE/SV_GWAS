@@ -164,7 +164,7 @@ for (c in cs){
   colnames(d_flt) <- new_sv_ids
   
   d_flt <- d_flt %>% 
-    rownames_to_column(var = "#IID")
+    rownames_to_column(var = "IID")
   #write filtered table
   d_flt2 <- cbind(a=0, d_flt)
   colnames(d_flt2)[1] <- "#FID"

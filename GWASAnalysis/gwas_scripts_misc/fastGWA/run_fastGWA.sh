@@ -26,7 +26,7 @@ echo "sv=$sv, svtype=$svtype"
 sp=`grep -w "$sv" ${d}/data_fastGWA/${svtype}_name_conversion_table.txt | cut -f4 | uniq` 
 echo "Species name: $sp"
 all_nsamples=()
-
+all_cohorts=()
 # create the output folder for meta-analysis results
 meta_out_dir=${d}/results_fastGWA/${svtype}/meta/${sv}/
 meta_out_filebase=${meta_out_dir}/${sv}.meta_res
@@ -86,11 +86,17 @@ do
       --covar ${gender_file} \
       --out ${res_dir}/${sv}
     
-    echo "$sv fastGWA return code: $?"    
+    rc=$?
+    echo "$sv fastGWA return code: $rc"    
     
-    # Number of samples with association results for this SV for this cohort
-    n=`head -2 ${res_dir}/${sv}.fastGWA | tail -1 | awk '{print $6}'`
-    all_nsamples+=( $n )
+    if [ $rc -eq 0 ]
+    then
+        # Number of samples with association results for this SV for this cohort
+        n=`head -2 ${res_dir}/${sv}.fastGWA | tail -1 | awk '{print $6}'`
+        all_cohorts+=( $cohort )
+        all_nsamples+=( $n )
+    fi    
+    
     
     gzip -f ${res_dir}/${sv}.fastGWA
     
@@ -114,7 +120,7 @@ do
 done
 
 # Convert to EMP
-cohorts_joined=`printf -v var '%s,' "${cohorts_with_sv[@]}"; echo "${var%,}"`
+cohorts_joined=`printf -v var '%s,' "${all_cohorts[@]}"; echo "${var%,}"`
 samplesize_joined=`printf -v var '%s,' "${all_nsamples[@]}"; echo "${var%,}"`
 
 #tail -n+2 ${meta_out_filebase}1.tbl | \
