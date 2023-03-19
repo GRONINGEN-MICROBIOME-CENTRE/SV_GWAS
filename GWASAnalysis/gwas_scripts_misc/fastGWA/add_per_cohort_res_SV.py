@@ -9,11 +9,11 @@ with open(sys.argv[1]) as f:
     print(f.readline().rstrip() + "\tsame_direction\tbetas_per_cohort\tP_per_cohort\tHetero_P")
     for l in f:
         spl = l.rstrip().split("\t")
-        snp = spl[1]
+        snp = spl[2]
         sv = spl[0]
-        directions = [*spl[7]]
-        datasets = spl[8].split(",")
-        Ns = spl[9].split(",")
+        directions = [*spl[8]]
+        datasets = spl[9].split(",")
+        Ns = spl[10].split(",")
         
         #Filter results tested in > 1 cohort, check if the effect direction is concordant
         new_directions = []

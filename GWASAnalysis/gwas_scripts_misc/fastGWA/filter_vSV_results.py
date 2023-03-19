@@ -36,5 +36,5 @@ with open(sys.argv[1]) as f:
                 concordant = "0"
         else:
             continue
-        print("\t".join(spl) + "\t" + concordant )
+        print("\t".join(spl))
         

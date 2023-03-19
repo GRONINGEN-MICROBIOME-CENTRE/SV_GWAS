@@ -10,4 +10,4 @@ colnames(d) <- gsub("SV", "id", colnames(d))
 colnames(d) <- gsub("Pvalue", "pval", colnames(d))
 res2 <-  ld_clump(d, clump_r2 = 0.1, clump_kb = 250000)
 
-write.table(res2, file = paste0(res_path, ".clumped_0.1.txt"), sep = "\t", quote = F, col.names = NA)
+write.table(res2, file = paste0(res_path, ".clumped_0.1.txt"), sep = "\t", quote = F, row.names = F)
