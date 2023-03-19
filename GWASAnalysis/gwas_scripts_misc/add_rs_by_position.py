@@ -10,9 +10,9 @@ Annotates a text table with SNPs as chr:pos with rs ids
 
 def getRs(chr_pos, vcf_reader):
     """ Gets an rs id from vcf_reader for a given chromosome and position. """
-	
-    chr = chr_pos.split(":")[0]
-    pos = int(chr_pos.split(":")[1])
+	spl = chr_pos.split(":")
+    chr = spl[0]
+    pos = int(spl[1])
     for record in vcf_reader.fetch(chr, pos - 1, pos):
         if record.is_snp:
             return record.ID
@@ -25,7 +25,8 @@ col_num = int(sys.argv[3]) # number of the column containing SNPs in in_f
 
 snp2rs = defaultdict()
 with open(in_f) as f:
-    print(f.readline().rstrip())
+    header = f.readline().rstrip()
+    print(header[:col_num] + "rsid" + header[col_num:])
     for l in f:
         spl = l.strip().split("\t")
         snp = spl[col_num]

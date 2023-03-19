@@ -1,0 +1,49 @@
+svtype="dSV"
+
+d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/
+res_dir=${d}/results/${svtype}/meta_combined_fdr/
+script_dir=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/
+
+
+#
+# 1. merge per SV results
+#
+
+mkdir ${res_dir}
+cd ${res_dir}
+
+gunzip -f ../meta/*/*.meta_res.annot.5e-8.tbl.gz
+
+echo -e "SV\tSNP\tEffect_allele\tOther_allele\tN\tZ\tPvalue\tDirection\tCohorts\tN_per_cohort" \
+> ${svtype}.fastGWA.5e-08.txt
+
+sort -m -k7,7g -T $TMPDIR -S 70G --buffer-size=1000 ../meta/*/*.meta_res.annot.5e-8.tbl >> ${svtype}.fastGWA.5e-08.txt
+
+gzip ../meta/*/*.meta_res.annot.5e-8.tbl
+
+#
+# 2. Filter vSV results (exclude failed pairs)
+#
+if [ $svtype == "vSV" ]
+then
+    res_file=${res_dir}/${svtype}.fastGWA.5e-08.flt.txt
+    python3 ${script_dir}/fastGWA/filter_vSV_results.py ${svtype}.fastGWA.5e-08.txt > $res_file
+else
+    res_file=${res_dir}/${svtype}.fastGWA.5e-08.txt
+fi
+
+#
+# 3. Add rs ids
+#
+python3 ${script_dir}/add_rs_by_position.py \
+    $res_file \
+    ${d}../resources/All_20180423.vcf.gz \
+    1 \
+    > ${res_file%txt}rsids.txt
+
+#
+# 4. Clump
+#
+${script_dir}/fastGWA/clump.R ${res_file%txt}rsids.txt 
+
+add_per_cohort_res_SV.py

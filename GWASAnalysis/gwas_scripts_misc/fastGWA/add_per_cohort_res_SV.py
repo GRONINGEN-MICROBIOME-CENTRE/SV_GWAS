@@ -3,9 +3,10 @@ import sys
 import subprocess
 
 script_dir = os.path.abspath(os.path.dirname(__file__)) 
+svtype = sys.argv[2]
 
 with open(sys.argv[1]) as f:
-    print(f.readline().rstrip() + "\tsame_direction")
+    print(f.readline().rstrip() + "\tsame_direction\tbetas_per_cohort\tP_per_cohort\tHetero_P")
     for l in f:
         spl = l.rstrip().split("\t")
         snp = spl[1]
@@ -36,5 +37,20 @@ with open(sys.argv[1]) as f:
                 concordant = "0"
         else:
             continue
-        print("\t".join(spl) + "\t" + concordant )
+        if concordant == "0":
+            res = 3*['NA']
+        else:
+            # Add per cohort beta, P, heterogeneity P
+            output = subprocess.check_output(['sh', script_dir + '/lookup_SV.sh', sv, snp, svtype, spl[8]])
+            res = output.decode().split("\n")[-2].split(" ")
+        
+            if new_directions[0] == '+':
+                new_betas = ",".join(map(str,(map(abs, map(float,res[0].split(","))))))
+            elif new_directions[0] == '-':
+                new_betas = ",".join(map(str,[-1*i for i in map(abs, map(float,res[0].split(",")))]))
+            else:
+                "ERROR! Wrong direction char"
+                new_betas = "NA"
+            res[0] = new_betas
+        print("\t".join(spl) + "\t" + concordant + "\t" + "\t".join(res))
         
