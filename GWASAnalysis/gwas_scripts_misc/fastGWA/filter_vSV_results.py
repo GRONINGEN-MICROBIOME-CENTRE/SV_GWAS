@@ -52,5 +52,5 @@ with open(sys.argv[1]) as f:
                 "ERROR! Wrong direction char"
                 new_betas = "NA"
             res[0] = new_betas
-        print("\t".join(spl) + "\t" concordant + "\t" + "\t".join(res))
+        print("\t".join(spl) + "\t" + concordant + "\t" + "\t".join(res))
         
