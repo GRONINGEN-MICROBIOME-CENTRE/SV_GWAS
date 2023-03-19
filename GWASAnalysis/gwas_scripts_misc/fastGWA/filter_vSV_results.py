@@ -1,4 +1,4 @@
-
+import os
 import sys
 import subprocess
 
@@ -32,20 +32,25 @@ with open(sys.argv[1]) as f:
             spl[8] = ",".join(new_datasets)
             spl[9] = ",".join(new_Ns)
             if new_directions.count(new_directions[0]) == len(new_directions):
-                res_str = "\t".join(spl) + "\t1"
+                concordant = "1"
             else:
-                res_str = "\t".join(spl) + "\t0"
-    
-        # Add per cohort beta, P, heterogeneity P
-        output = subprocess.check_output(['sh', script_dir + '/lookup_SV.sh', sv, snp, svtype, spl[8]])
-        res = output.decode().split("\n")[-2].split(" ")
-        if new_directions[0] == '+':
-            new_betas = ",".join(map(str,(map(abs, map(float,res[0].split(","))))))
-        elif new_directions[0] == '-':
-            new_betas = ",".join(map(str,[-1*i for i in map(abs, map(float,res[0].split(",")))]))
+                concordant = "0"
         else:
-            "ERROR! Wrong direction char"
-            new_betas = "NA"
-        res[0] = new_betas
-        print(res_str + "\t" + "\t".join(res))
+            continue
+        if concordant == "0":
+            res = 3*['NA']
+        else:
+            # Add per cohort beta, P, heterogeneity P
+            output = subprocess.check_output(['sh', script_dir + '/lookup_SV.sh', sv, snp, svtype, spl[8]])
+            res = output.decode().split("\n")[-2].split(" ")
+        
+            if new_directions[0] == '+':
+                new_betas = ",".join(map(str,(map(abs, map(float,res[0].split(","))))))
+            elif new_directions[0] == '-':
+                new_betas = ",".join(map(str,[-1*i for i in map(abs, map(float,res[0].split(",")))]))
+            else:
+                "ERROR! Wrong direction char"
+                new_betas = "NA"
+            res[0] = new_betas
+        print("\t".join(spl) + "\t" concordant + "\t" + "\t".join(res))
         
