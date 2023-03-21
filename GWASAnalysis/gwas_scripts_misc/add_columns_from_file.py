@@ -42,16 +42,22 @@ def main(args):
         f_line = open(args['f_fname']).readline().rstrip("\r\n").split(sep)
         ncols = len(f_line)
         f_cols = range(1,ncols)
-    with open(args['f_fname']) as f_file:
-        if args['header']:
-            header = f_file.readline().rstrip("\r\n").split(sep)
-            add_col_names = [header[int(i)] for i in f_cols]
-        for line in f_file:
-            spl = line.rstrip("\r\n").split(sep)
-            if spl[f_m] in add_dict:
-                sys.stderr.write ("Duplicate row names in the second file are not allowed: " + spl[f_m] + "\nExiting!")
-                sys.exit(-1)
-            add_dict[spl[f_m]] = [spl[int(i)] for i in f_cols]
+    if args['f_fname'].endswith(".gz"):
+        f_file = gzip.open(args['f_fname'])
+    else:
+        f_file = open(args['f_fname'])
+    
+    if args['header']:
+        header = f_file.readline().rstrip("\r\n").split(sep)
+        add_col_names = [header[int(i)] for i in f_cols]
+    for line in f_file:
+        spl = line.rstrip("\r\n").split(sep)
+        if "_" in f_m:
+            col1,col2 = f_m.split("_")
+        if spl[f_m] in add_dict:
+            sys.stderr.write ("Duplicate row names in the second file are not allowed: " + spl[f_m] + "\nExiting!")
+            sys.exit(-1)
+        add_dict[spl[f_m]] = [spl[int(i)] for i in f_cols]
 
 
     if args['i_fname'] != "stdin":
