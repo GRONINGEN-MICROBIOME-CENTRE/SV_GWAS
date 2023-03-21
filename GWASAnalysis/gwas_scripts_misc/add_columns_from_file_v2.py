@@ -35,8 +35,8 @@ def main(args):
     #separator = args['sep']
     separator = "\t"
     
-    i_file = pd.read_csv(i_fname, sep = separator, header = header_row)
-    f_file = pd.read_csv(args['f_fname'], sep = separator, header = header_row)
+    i_file = pd.read_csv(i_fname, dtype = "str", sep = separator, header = header_row)
+    f_file = pd.read_csv(args['f_fname'], dtype = "str", sep = separator, header = header_row)
     
     if ',' not in args['i_m']:
         i_m = [i_file.columns[int(args['i_m'])]]
