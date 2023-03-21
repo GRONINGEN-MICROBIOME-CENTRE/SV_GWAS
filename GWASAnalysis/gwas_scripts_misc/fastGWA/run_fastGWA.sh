@@ -109,15 +109,9 @@ done
 
 
 # Real GWAS meta-analysis
-echo -e "OUTFILE\t${meta_out_filebase} .tbl\nANALYZE\nQUIT" >> $metal_script
+echo -e "OUTFILE\t${meta_out_filebase} .tbl\nANALYZE HETEROGENEITY\nQUIT" >> $metal_script
 metal $metal_script
 echo "${sv}, real analysis metal return code: $?"
-
-for cohort in ${cohorts_with_sv[@]}
-do 
-    res_dir=${d}/results_fastGWA/${svtype}/${cohort}/${sv}/
-    rm ${res_dir}/${sv}.fastGWA.gz
-done
 
 # Convert to EMP
 cohorts_joined=`printf -v var '%s,' "${all_cohorts[@]}"; echo "${var%,}"`
@@ -132,6 +126,22 @@ tail -n+2  ${meta_out_filebase}1.tbl | sort -k6,6g | awk -v c=${cohorts_joined} 
 > ${meta_out_filebase}.annot.tbl.gz
 
 zcat ${meta_out_filebase}.annot.tbl.gz | awk '{FS=OFS="\t"}; {if ($7 < 5e-8) print}' | gzip -cf > ${meta_out_filebase}.annot.5e-8.tbl.gz
+
+
+# add per cohort Z and P
+cmd=""
+for cohort in ${all_cohorts[@]}
+do
+    cmd="| python3 ${script_dir}/add_columns_from_file_v2.py -i stdin -i_m 1 -f_m 1 -f_cols 7,9 -f ${d}/results_fastGWA/${svtype}/${cohort}/${sv}/${sv}.fastGWA.gz $cmd"
+done
+full_cmd="zcat ${meta_out_filebase}.annot.5e-8.tbl.gz $cmd | gzip -c > ${meta_out_filebase}.annot.5e-8.per_cohort.tbl.gz"
+eval $full_cmd
+
+for cohort in ${cohorts_with_sv[@]}
+do 
+    res_dir=${d}/results_fastGWA/${svtype}/${cohort}/${sv}/
+    rm ${res_dir}/${sv}.fastGWA.gz
+done
 
 rm ${meta_out_filebase}1.tbl*
 
