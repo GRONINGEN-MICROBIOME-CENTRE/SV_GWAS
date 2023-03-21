@@ -156,7 +156,7 @@ for (c in cs){
     
     # normalize: apply INT
     d_norm <- apply(d_flt, 2, function(x) qnorm((rank(x,na.last="keep")-0.5)/sum(!is.na(x))))
-    d_flt <- d_norm
+    d_flt <- as.data.frame(d_norm)
   }
   # rename SVs
   new_sv_ids <-(conv[match(colnames(d_flt), conv$sv_id, nomatch = 0),"new_sv_id"])

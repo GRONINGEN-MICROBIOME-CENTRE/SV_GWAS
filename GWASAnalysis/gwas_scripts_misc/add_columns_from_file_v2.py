@@ -52,10 +52,8 @@ def main(args):
     else:    
         colnames = f_cols
 
-    #elif header_row == 0:
-    #sys.stderr.write()
     
-    sys.stderr.write("i_m = " +  ",".join(map(str, i_m)) + "; f_m = " + ",".join(map(str,f_m)) + "; f_cols = " + ",".join(map(str,f_cols)) + "; colnames = " + ",".join(map(str,colnames)) + "\n")
+    #sys.stderr.write("i_m = " +  ",".join(map(str, i_m)) + "; f_m = " + ",".join(map(str,f_m)) + "; f_cols = " + ",".join(map(str,f_cols)) + "; colnames = " + ",".join(map(str,colnames)) + "\n")
     
     if len(f_cols) == 1 and len(i_m) == 1:
         if str(colnames[0]) not in i_file.columns:
