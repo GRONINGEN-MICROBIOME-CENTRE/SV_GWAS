@@ -52,8 +52,7 @@ def main(args):
         add_col_names = [header[int(i)] for i in f_cols]
     for line in f_file:
         spl = line.rstrip("\r\n").split(sep)
-        if "_" in f_m:
-            col1,col2 = f_m.split("_")
+
         if spl[f_m] in add_dict:
             sys.stderr.write ("Duplicate row names in the second file are not allowed: " + spl[f_m] + "\nExiting!")
             sys.exit(-1)
