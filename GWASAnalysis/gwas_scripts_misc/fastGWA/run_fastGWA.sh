@@ -114,8 +114,8 @@ metal $metal_script
 echo "${sv}, real analysis metal return code: $?"
 
 # Convert to EMP
-#cohorts_joined=`printf -v var '%s,' "${all_cohorts[@]}"; echo "${var%,}"`
-#samplesize_joined=`printf -v var '%s,' "${all_nsamples[@]}"; echo "${var%,}"`
+cohorts_joined=`printf -v var '%s,' "${all_cohorts[@]}"; echo "${var%,}"`
+samplesize_joined=`printf -v var '%s,' "${all_nsamples[@]}"; echo "${var%,}"`
 
 #tail -n+2 ${meta_out_filebase}1.tbl | \
 #sort -k6g | \
