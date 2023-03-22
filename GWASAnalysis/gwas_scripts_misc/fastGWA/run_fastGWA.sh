@@ -134,7 +134,7 @@ for cohort in ${all_cohorts[@]}
 do
     cmd="$cmd | python3 ${script_dir}/add_columns_from_file_v2.py -i stdin -i_m 1 -f_m 1 -f_cols 7,9 -f ${d}/results_fastGWA/${svtype}/${cohort}/${sv}/${sv}.fastGWA.gz"
 done
-full_cmd="zcat ${meta_out_filebase}.annot.5e-8.tbl.gz $cmd | ${script_dir}/fastGWA/postprocess_vSV_gwas.py | gzip -c  > ${meta_out_filebase}.annot.5e-8.per_cohort.tbl.gz"
+full_cmd="zcat ${meta_out_filebase}.annot.5e-8.tbl.gz $cmd | python3 ${script_dir}/fastGWA/postprocess_vSV_gwas.py | gzip -c  > ${meta_out_filebase}.annot.5e-8.per_cohort.tbl.gz"
 eval $full_cmd
 
 for cohort in ${cohorts_with_sv[@]}
