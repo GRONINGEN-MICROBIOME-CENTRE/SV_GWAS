@@ -9,7 +9,8 @@ if fname != "stdin":
     else:
         f = open(fname, mode = 'rt')
 else:
-    f = open(sys.stdin, mode = 'rt')
+    f = open(sys.stdin)
+    
 for l in f:
     spl = l.rstrip().split("\t")
     snp = spl[1]
