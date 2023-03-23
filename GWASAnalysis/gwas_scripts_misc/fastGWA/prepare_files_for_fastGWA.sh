@@ -93,8 +93,7 @@ do
     grm=${d}genotypes/${cohort}/with_relatives/GCTA/GRM_${cohort}
     mkdir ${d}genotypes/${cohort}/with_relatives/GCTA/
 
-    gcta=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-sandreusanchez/Immuno_markers/Genetics/Heritability/Programs/gcta_1.93.2beta/gcta64
-
+    
     $gcta --bfile ${geno_file} --extract ${d}/genotypes/genotyped_SNPs.snplist --maf 0.05 --make-grm --out $grm --thread-num 2
 
     $gcta --grm $grm --make-bK-sparse 0.05 --out ${grm}_sparse 
