@@ -129,12 +129,19 @@ zcat ${meta_out_filebase}.annot.tbl.gz | awk '{FS=OFS="\t"}; {if ($7 < 5e-8) pri
 
 
 # add per cohort Z and P
+#10,12
 cmd=""
 for cohort in ${all_cohorts[@]}
 do
     if [ -f ${d}/results_fastGWA/${svtype}/${cohort}/${sv}/${sv}.fastGWA.gz ]
     then
-        cmd="$cmd | python3 ${script_dir}/add_columns_from_file_v2.py -i stdin -i_m 1 -f_m 1 -f_cols 7,9 -f ${d}/results_fastGWA/${svtype}/${cohort}/${sv}/${sv}.fastGWA.gz"
+        if [ $svtype == "dSV" ]
+        then
+            cmd="$cmd | python3 ${script_dir}/add_columns_from_file_v2.py -i stdin -i_m 1 -f_m 1 -f_cols 10,12 -f ${d}/results_fastGWA/${svtype}/${cohort}/${sv}/${sv}.fastGWA.gz"
+
+        else
+            cmd="$cmd | python3 ${script_dir}/add_columns_from_file_v2.py -i stdin -i_m 1 -f_m 1 -f_cols 7,9 -f ${d}/results_fastGWA/${svtype}/${cohort}/${sv}/${sv}.fastGWA.gz"
+        fi
     fi
 done
 full_cmd="zcat ${meta_out_filebase}.annot.5e-8.tbl.gz $cmd | python3 ${script_dir}/fastGWA/postprocess_vSV_gwas.py stdin | gzip -c  > ${meta_out_filebase}.annot.5e-8.per_cohort.tbl.gz"
