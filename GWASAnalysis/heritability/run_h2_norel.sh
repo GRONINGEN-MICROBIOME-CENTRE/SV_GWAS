@@ -8,9 +8,8 @@
 
 d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/
 gcta=${d}/tools/gcta-1.94.1-linux-kernel-3-x86_64/gcta-1.94.1
-
 pheno_dir=${d}/data_fastGWA/
-mgrm=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/genotypes/DAG3/GCTA/mgrm.txt
+grm=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/genotypes/DAG3/GCTA/GRM_DAG3_norel
 gender_file=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/genotypes/DAG3/DAG3_gender.txt
 
 sv=$1
@@ -34,11 +33,11 @@ awk -v c=$col_cov 'BEGIN {FS=OFS="\t"}; {print $1, $2, $c, $(NF-1), $(NF) }' ${p
 
 # Run reml on family data
 $gcta --reml \
-    --mgrm ${mgrm} \
+    --grm ${grm} \
     --pheno ${pheno_dir}/DAG3.${svtype}.filtered.noheader.txt \
     --mpheno $col \
     --qcovar ${res_dir}/tmp.qcovar.txt \
     --covar ${gender_file} \
-    --out ${res_dir}/${sv}_bKsK 
+    --out ${res_dir}/${sv}_norel
 
 rm ${res_dir}/tmp.qcovar.txt
