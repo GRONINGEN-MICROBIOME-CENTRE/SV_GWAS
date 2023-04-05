@@ -123,7 +123,7 @@ done < all_bacs_${svtype}.txt
 # Check which SVs are missing
 result_dir=${d}/results/${svtype}/meta/
 result_dir="/groups/umcg-fu/tmp01/projects/SV_GWAS/GWAS_tmp//results/dSV/meta/"
-result_dir="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/results/dSV/meta/"
+result_dir="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/results/${svtype}/meta/"
 while read line
 do
     sv=$line

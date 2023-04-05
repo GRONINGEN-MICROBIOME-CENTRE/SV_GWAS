@@ -6,7 +6,8 @@ base_path = "/data/umcg-tifn/SV/SV_GWAS/"
 
 for c in cohorts:
     fname = base_path + "genotypes/" + c + "/text_genotypes/" + c + ".abo.genotypes.txt"
-    data = pd.read_csv(fname, sep = "\t", index_col = 0)
+    # first column is rs8176693 (9:136137657), second is rs505922 (9:136149229)
+    data = pd.read_csv(fname, sep = "\t", index_col = 0) 
     out = open(base_path + "data/pheno/" + c + ".abo_blood_group.txt", 'w')
     data2 = data.transpose()
     out.write("sampleid\tBloodtype\tBlood_genotype\n")

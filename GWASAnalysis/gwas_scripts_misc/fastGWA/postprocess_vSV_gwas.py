@@ -25,6 +25,8 @@ for l in f:
     new_Ns = []
     betas = []
     pvals = []
+    all_cohort_signif_count = 0
+    all_cohort_signif = 0
     for i, direction in enumerate(directions):
         if not direction == "?":
             new_directions.append(direction)
@@ -34,7 +36,11 @@ for l in f:
                 betas.append(abs(float(spl[15 + 2*i])))
             elif direction == '-':
                 betas.append(-1*abs(float(spl[15 + 2*i])))
-            pvals.append(float(spl[15 + 2*i + 1]))
+            pval = float(spl[15 + 2*i + 1])
+            pvals.append(pval)
+            if pval < 0.05:
+                all_cohort_signif_count += 1
+    if all_cohort_signif_count > 1: all_cohort_signif = 1
     if not(len(new_directions) == len(new_datasets) == len(new_Ns)):
         print("ERROR! Resulting lists are not of equal length! " + " ".join(spl))
     
@@ -48,4 +54,4 @@ for l in f:
             concordant = "0"
     else:
         continue
-    print("\t".join(spl[:8]) + "\t" + "\t".join(spl[11:15]) + "\t" + ",".join(map(str,betas)) + "\t" + ",".join(map(str,pvals)) + "\t" + concordant)
+    print("\t".join(spl[:8]) + "\t" + "\t".join(spl[11:15]) + "\t" + ",".join(map(str,betas)) + "\t" + ",".join(map(str,pvals)) + "\t" + concordant + "\t" + all_cohort_signif)

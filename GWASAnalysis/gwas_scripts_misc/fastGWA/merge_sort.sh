@@ -19,7 +19,7 @@ meta_comb_dir=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernak
 mkdir ${meta_comb_dir}
 cd ${meta_comb_dir}
 
-gunzip ../meta/*/*.meta_res.annot.5e-8.tbl.gz
+gunzip -f ../meta/*/*.meta_res.annot.5e-8.tbl.gz
 
 echo -e "SV\tSNP\tEffect_allele\tOther_allele\tN\tZ\tPvalue\tDirection\tCohorts\tN_per_cohort" \
 > ${svtype}.fastGWA.5e-08.txt
