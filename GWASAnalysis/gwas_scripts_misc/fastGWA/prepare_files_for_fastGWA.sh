@@ -97,7 +97,8 @@ do
     $gcta --bfile ${geno_file} --extract ${d}/genotypes/genotyped_SNPs.snplist --maf 0.05 --make-grm --out $grm --thread-num 2
 
     $gcta --grm $grm --make-bK-sparse 0.05 --out ${grm}_sparse 
-
+    
+    $gcta --bfile ${geno_file} --extract ${d}/genotypes/genotyped_SNPs.snplist --maf 0.05 --make-grm-gz --out ${grm}.text --thread-num 2
 done
 
 

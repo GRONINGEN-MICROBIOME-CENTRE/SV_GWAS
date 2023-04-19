@@ -2,13 +2,13 @@
 import pandas as pd
 
 cohorts = ["LLD", "500FG", "DAG3"]
-base_path = "/data/umcg-tifn/SV/SV_GWAS/"
+base_path = "/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/"
 
 for c in cohorts:
-    fname = base_path + "genotypes/" + c + "/text_genotypes/" + c + ".abo.genotypes.txt"
+    fname = base_path + "genotypes/" + c + "/with_relatives/text_genotypes/" + c + ".abo.genotypes.txt"
     # first column is rs8176693 (9:136137657), second is rs505922 (9:136149229)
     data = pd.read_csv(fname, sep = "\t", index_col = 0) 
-    out = open(base_path + "data/pheno/" + c + ".abo_blood_group.txt", 'w')
+    out = open(base_path + "data_fastGWA/pheno/" + c + ".abo_blood_group.txt", 'w')
     data2 = data.transpose()
     out.write("sampleid\tBloodtype\tBlood_genotype\n")
     for i in range(1,len(data2)):
