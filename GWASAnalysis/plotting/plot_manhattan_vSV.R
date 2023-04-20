@@ -3,12 +3,13 @@ library(tidyr)
 library(dplyr)
 library(ggbreak)
 
-d <- read.delim("/data/umcg-tifn/SV/SV_GWAS/plots/vSVs_for_manhattan.txt", header = F, as.is = T, sep = "\t", check.names = F)
+setwd('/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/plots')
+d <- read.delim("vSVs_for_manhattan.txt", header = F, as.is = T, sep = "\t", check.names = F)
 colnames(d) <- c("bac","SNP", "CHR", "BP", "P")
 d$BP <- as.numeric(d$BP)
 
 
-snps_to_highlight <- read.delim("/data/umcg-tifn/SV/SV_GWAS/plots/vSV_snps2highlight.txt", header = F, as.is = T, sep = "\t", check.names = F)[,1]
+snps_to_highlight <- read.delim("vSV.snps_to_highlight.txt", header = F, as.is = T, sep = "\t", check.names = F)[,1]
 
 don <- d %>% 
   
@@ -35,7 +36,7 @@ axisdf <- don %>% group_by(CHR) %>% summarize(center=( max(BPcum) + min(BPcum) )
 
 
 
-png("/data/umcg-tifn/SV/SV_GWAS/plots/vSV_manhattan_noannot.v9.png", type = "cairo", width = 15, height = 5, units = 'in', res = 400)
+png("vSV_manhattan_noannot.png", type = "cairo", width = 15, height = 5, units = 'in', res = 400)
 
 ggplot(don, aes(x=BPcum, y=log10(P))) +
   # Show all points
