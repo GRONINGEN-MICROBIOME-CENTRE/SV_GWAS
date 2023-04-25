@@ -38,11 +38,11 @@ ggplot(don, aes(x=BPcum, y=-log10(P))) +
   # Show all points
   geom_point( aes(color=as.factor(CHR)),  size=1) +
   scale_color_manual(values = rep(c("#495DA0", "#74AFDF"), 22 )) +
-  geom_hline(yintercept=8.302771, color = "#EF3B2C") +
+  geom_hline(yintercept=7.30103, color = "#EF3B2C", linewidth = 0.3) +
   # custom X axis:
   xlab("Chromosome") +
   scale_x_continuous( label = axisdf$CHR, breaks= axisdf$center ) +
-  scale_y_continuous(expand = c(0, 0) , limits = c(0,45)) +
+  scale_y_continuous(expand = c(0, 0) , limits = c(0,46)) +
   
   # Add highlighted points
   geom_point(data=subset(don, is_highlight=="yes"), color="orange", size=1) +
