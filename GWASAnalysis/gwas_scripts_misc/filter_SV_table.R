@@ -107,7 +107,7 @@ run_qc_per_sample <- function(d, cohort_name, outpath, cr = 0.05){
 d <- read.delim(infile, header = T, sep = "\t", as.is = T, check.names = F, row.names = NULL)
 
 # SV name conversion table
-conv <- read.delim(paste0("data/", sv_type, "_name_conversion_table.txt"), header = T,  sep = "\t", as.is = T, check.names = F)
+conv <- read.delim(paste0("data_fastGWA/", sv_type, "_name_conversion_table.txt"), header = T,  sep = "\t", as.is = T, check.names = F)
 
 # Table with cohort info for each sample id
 cohorts <- read.delim(cohort_table, header = T, sep = "\t", as.is = T, check.names = F)
@@ -131,32 +131,32 @@ for (c in cs){
   if (c == "300-OB") c = "300OB"
   
   # get samples with genotype and covariate data
-  geno <- read.delim(paste0("data/",c, ".covariates.txt") , header = T, sep = "\t", as.is = T, check.names = F, row.names = 1)
+  geno <- read.delim(paste0("data_fastGWA/",c, ".covariates.txt") , header = T, sep = "\t", as.is = T, check.names = F)
   cat("Number of samples with dSVs: ", nrow(d_cohort), "\n")
   cat("Number of samples with genotypes and covariates: ", nrow(geno), "\n")
-  sample_overlap <- row.names(d_cohort)[row.names(d_cohort) %in% row.names(geno)]
+  sample_overlap <- row.names(d_cohort)[row.names(d_cohort) %in% geno$IID]
   cat ("Number overlapping samples: ", length(sample_overlap), "\n")
   d_cohort <- d_cohort[row.names(d_cohort) %in% sample_overlap,]
   
   #filter SVs and samples
   if (sv_type == "dSV"){
-    d_flt <- run_qc_per_dsv(d_cohort, c, paste0("data/QC/", c, ".dSV_filtering"))
-    d_flt <- run_qc_per_sample(d_flt, c, paste0("data/QC/", c, ".dSV_filtering"))
+    d_flt <- run_qc_per_dsv(d_cohort, c, paste0("data_fastGWA/QC/", c, ".dSV_filtering"))
+    d_flt <- run_qc_per_sample(d_flt, c, paste0("data_fastGWA/QC/", c, ".dSV_filtering"))
   
     sv_per_cohort[row.names(sv_per_cohort) %in% colnames(d_flt), c] <- 1
   
     #change 0/1 into 1/2
-    d_flt[] <- lapply(as.data.frame(d_flt), function(x) sub(1,2,x))
-    d_flt[] <- lapply(as.data.frame(d_flt), function(x) sub(0,1,x))
+    #d_flt[] <- lapply(as.data.frame(d_flt), function(x) sub(1,2,x))
+    #d_flt[] <- lapply(as.data.frame(d_flt), function(x) sub(0,1,x))
   } else if (sv_type == "vSV"){
-    d_flt <- run_qc_per_vsv(d_cohort, c, paste0("data/QC/", c, ".vSV_filtering"))
-    d_flt <- run_qc_per_sample(d_flt, c, paste0("data/QC/", c, ".vSV_filtering"))
+    d_flt <- run_qc_per_vsv(d_cohort, c, paste0("data_fastGWA/QC/", c, ".vSV_filtering"))
+    d_flt <- run_qc_per_sample(d_flt, c, paste0("data_fastGWA/QC/", c, ".vSV_filtering"))
     
     sv_per_cohort[row.names(sv_per_cohort) %in% colnames(d_flt), c] <- 1
     
     # normalize: apply INT
     d_norm <- apply(d_flt, 2, function(x) qnorm((rank(x,na.last="keep")-0.5)/sum(!is.na(x))))
-    
+    d_flt <- as.data.frame(d_norm)
   }
   # rename SVs
   new_sv_ids <-(conv[match(colnames(d_flt), conv$sv_id, nomatch = 0),"new_sv_id"])
@@ -164,16 +164,18 @@ for (c in cs){
   colnames(d_flt) <- new_sv_ids
   
   d_flt <- d_flt %>% 
-    rownames_to_column(var = "#IID")
+    rownames_to_column(var = "IID")
   #write filtered table
-  write.table(d_flt, file = paste0("data/", c, ".", sv_type,".filtered.txt"), sep = "\t", quote = F, row.names = F) 
+  d_flt2 <- cbind(a=0, d_flt)
+  colnames(d_flt2)[1] <- "#FID"
+  write.table(d_flt2, file = paste0("data_fastGWA/", c, ".", sv_type,".filtered.txt"), sep = "\t", quote = F, row.names = F) 
 }
 
 
 # plot number of SVs and their overlap between cohorts
 sv_per_cohort <- as.data.frame(sv_per_cohort)
 sv_per_cohort[is.na(sv_per_cohort)] <- 0
-pdf(paste0("data/QC/", sv_type, "_overlap_v3.pdf"),  useDingbats = F)
+pdf(paste0("data_fastGWA/QC/", sv_type, "_overlap_v3.pdf"),  useDingbats = F)
 upset(sv_per_cohort, order.by = "freq")
 dev.off()
 
@@ -187,12 +189,12 @@ sv_per_cohort$cohorts <- NA
 sv_per_cohort$cohorts <- apply(sv_per_cohort, 1, function(x) {paste(colnames(sv_per_cohort)[which(x==1)], collapse = ",")})
 sv_per_cohort <- sv_per_cohort[sv_per_cohort$cohorts != "",]
 
-write.table(sv_per_cohort, file = paste0("data/", sv_type, "_per_cohort_all_cohorts.txt"), sep = "\t", quote = F, col.names = NA) 
+write.table(sv_per_cohort, file = paste0("data_fastGWA/", sv_type, "_per_cohort_all_cohorts.txt"), sep = "\t", quote = F, col.names = NA) 
 
 
 # Write SVs present in > 1 cohort
 sv_per_cohort2 <- sv_per_cohort[rowSums(sv_per_cohort[,1:4]) > 1,]
-write.table(sv_per_cohort2, file = paste0("data/", sv_type, "_per_cohort.txt"), sep = "\t", quote = F, col.names = NA)
+write.table(sv_per_cohort2, file = paste0("data_fastGWA/", sv_type, "_per_cohort.txt"), sep = "\t", quote = F, col.names = NA)
 
 
 

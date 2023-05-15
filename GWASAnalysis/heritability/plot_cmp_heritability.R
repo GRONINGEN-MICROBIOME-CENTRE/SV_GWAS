@@ -37,6 +37,8 @@ merged_sv <- rbind(dsv, vsv)
 abund2 <- abund
 row.names(abund2) <- abund2$SP
 merged_sv$abundance_h2 <- abund2[merged_sv$SP, "h2"]
+merged_sv$abundance_h2_lower <- abund2[merged_sv$SP, "lower"]
+merged_sv$abundance_h2_upper <- abund2[merged_sv$SP, "upper"]
 
 merged_sv <- merged_sv[order(merged_sv$h2, decreasing = T),]
 
@@ -55,6 +57,8 @@ ggplot(merged_sv[merged_sv$signif == 1,], aes (x = reorder(SV, h2), y = h2, fill
   geom_errorbar(color = "yellow", aes(ymin=lower, ymax=upper), width=.2,
                 position="dodge") +
   geom_hline(aes(yintercept = abundance_h2), color = "red") +
+  geom_hline(aes(yintercept = abundance_h2_lower), color = "red", linetype = "dashed") +
+  geom_hline(aes(yintercept = abundance_h2_upper), color = "red", linetype = "dashed") +
    theme(axis.text.y = element_blank(), axis.ticks.y=element_blank(), 
          legend.position = "none", strip.text.y.left = element_text(angle = 0),
          panel.border = element_rect(color = "black", fill = NA, linewidth = 0.6), panel.spacing = unit(.5, "lines")) +

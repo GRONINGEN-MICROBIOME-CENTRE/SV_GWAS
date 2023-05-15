@@ -113,14 +113,10 @@ echo -e "OUTFILE\t${meta_out_filebase} .tbl\nANALYZE HETEROGENEITY\nQUIT" >> $me
 metal $metal_script
 echo "${sv}, real analysis metal return code: $?"
 
-# Convert to EMP
+
+# Format output files
 cohorts_joined=`printf -v var '%s,' "${all_cohorts[@]}"; echo "${var%,}"`
 samplesize_joined=`printf -v var '%s,' "${all_nsamples[@]}"; echo "${var%,}"`
-
-#tail -n+2 ${meta_out_filebase}1.tbl | \
-#sort -k6g | \
-#python3 ${script_dir}/metal_to_EMP.py stdin ${sv} $cohorts_joined $samplesize_joined 0.05 | tail -n+2  | gzip -c \
-#> ${meta_out_filebase}.eQTLs.txt.gz
 
 tail -n+2  ${meta_out_filebase}1.tbl | sort -k6,6g | awk -v c=${cohorts_joined} -v s=${samplesize_joined} -v svname=${sv} 'BEGIN {FS=OFS="\t"}; {print svname,$0, c, s}' | gzip -cf \
 > ${meta_out_filebase}.annot.tbl.gz
@@ -128,8 +124,7 @@ tail -n+2  ${meta_out_filebase}1.tbl | sort -k6,6g | awk -v c=${cohorts_joined} 
 zcat ${meta_out_filebase}.annot.tbl.gz | awk '{FS=OFS="\t"}; {if ($7 < 5e-8) print}' | gzip -cf > ${meta_out_filebase}.annot.5e-8.tbl.gz
 
 
-# add per cohort Z and P
-#10,12
+# add per cohort beta, N and P
 cmd=""
 for cohort in ${all_cohorts[@]}
 do
@@ -137,16 +132,17 @@ do
     then
         if [ $svtype == "dSV" ]
         then
-            cmd="$cmd | python3 ${script_dir}/add_columns_from_file_v2.py -i stdin -i_m 1 -f_m 1 -f_cols 10,12 -f ${d}/results_fastGWA/${svtype}/${cohort}/${sv}/${sv}.fastGWA.gz"
+            cmd="$cmd | python3 ${script_dir}/utils/add_columns_from_file_v2.py -i stdin -i_m 1 -f_m 1 -f_cols 10,12 -f ${d}/results_fastGWA/${svtype}/${cohort}/${sv}/${sv}.fastGWA.gz"
 
         else
-            cmd="$cmd | python3 ${script_dir}/add_columns_from_file_v2.py -i stdin -i_m 1 -f_m 1 -f_cols 7,9 -f ${d}/results_fastGWA/${svtype}/${cohort}/${sv}/${sv}.fastGWA.gz"
+            cmd="$cmd | python3 ${script_dir}/utils/add_columns_from_file_v2.py -i stdin -i_m 1 -f_m 1 -f_cols 7,9 -f ${d}/results_fastGWA/${svtype}/${cohort}/${sv}/${sv}.fastGWA.gz"
         fi
     fi
 done
-full_cmd="zcat ${meta_out_filebase}.annot.5e-8.tbl.gz $cmd | python3 ${script_dir}/fastGWA/postprocess_vSV_gwas.py stdin | gzip -c  > ${meta_out_filebase}.annot.5e-8.per_cohort.tbl.gz"
+full_cmd="zcat ${meta_out_filebase}.annot.5e-8.tbl.gz $cmd | python3 ${script_dir}/utils/postprocess_vSV_gwas.py stdin | gzip -c  > ${meta_out_filebase}.annot.5e-8.per_cohort.tbl.gz"
 eval $full_cmd
 
+# remove intermediate files
 for cohort in ${cohorts_with_sv[@]}
 do 
     res_dir=${d}/results_fastGWA/${svtype}/${cohort}/${sv}/

@@ -8,32 +8,6 @@ d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/
 cur_script_dir=${d}/scripts/SV_GWAS/GWASAnalysis/heritability/
 
 
-#
-# Prepare SV and covariate files in plink v1.9 format
-#
-
-# Not necessary anymore since we use fastGWA for the GWAS
-
-# cd ${d}/data/
-# mkdir plink19_format
-# 
-# svtype=dSV
-# awk 'BEGIN {FS=OFS="\t"}; {if (NR == 1) $1 = "#FID\tIID"; else $1 = "0\t" $1; print  }' DAG3.${svtype}.filtered.txt > plink19_format/DAG3.${svtype}.filtered.plink19.txt
-# tail -n+2 plink19_format/DAG3.${svtype}.filtered.plink19.txt > plink19_format/DAG3.${svtype}.filtered.plink19.noheader.txt
-# 
-# svtype=vSV
-# awk 'BEGIN {FS=OFS="\t"}; {if (NR == 1) $1 = "#FID\tIID"; else $1 = "0\t" $1; print  }' DAG3.${svtype}.filtered.txt > plink19_format/DAG3.${svtype}.filtered.plink19.txt
-# tail -n+2 plink19_format/DAG3.${svtype}.filtered.plink19.txt > plink19_format/DAG3.${svtype}.filtered.plink19.noheader.txt
-# 
-# sed 's:"::g' abund/DAG3_abundances.tsv | \
-# sed '1s:.:#IID\t&:' | \
-# python ${cur_script_dir}/../gwas_scripts_misc/rename_header_based_on_file.py stdin dSV_name_conversion_table.txt 1 3 | \
-# python ${cur_script_dir}/../gwas_scripts_misc/add_columns_from_file.py -i stdin  -f pheno/DAG3_pheno.txt -f_m 0 -f_cols 1,2 | \
-# grep -w -v "NA" | \
-# awk 'BEGIN {FS=OFS="\t"}; {if (NR == 1) $1 = "#FID\tIID"; else $1 = "0\t" $1; print }' \
-# > plink19_format/DAG3.covariates.plink19.txt
-# 
-# tail -n+2 plink19_format/DAG3.covariates.plink19.txt > plink19_format/DAG3.covariates.plink19.noheader.txt
 
 #
 # vSVs

@@ -1,6 +1,11 @@
 import sys
 import gzip
 
+"""
+Add per cohort P-values, betas, Ns to the meta-analysis results. 
+"""
+
+
 fname = sys.argv[1]
 
 if fname != "stdin":
@@ -18,17 +23,17 @@ for l in f:
     directions = [*spl[7]]
     datasets = spl[13].split(",")
     Ns = spl[14].split(",")
-    #Ns = datasets
 
     new_directions = []
     new_datasets = []
-    new_Ns = []
-    betas = []
-    pvals = []
-    all_cohort_signif_count = 0
-    all_cohort_signif = 0
+    new_Ns = [] # per cohort N
+    betas = [] # per cohort betas
+    pvals = [] # per cohort P values
+    all_cohort_signif_count = 0 # number of cohorts with association P < 0.05
+    all_cohort_signif = 0 # is the results nominally significant in at least 2 cohorts?
     for i, direction in enumerate(directions):
-        if not direction == "?":
+        # only keep per-cohort results for tested SNP-SV combinations
+        if not direction == "?": 
             new_directions.append(direction)
             new_datasets.append(datasets[i])
             new_Ns.append(Ns[i])
@@ -40,14 +45,18 @@ for l in f:
             pvals.append(pval)
             if pval < 0.05:
                 all_cohort_signif_count += 1
+    
     if all_cohort_signif_count > 1: all_cohort_signif = 1
+      
     if not(len(new_directions) == len(new_datasets) == len(new_Ns)):
         print("ERROR! Resulting lists are not of equal length! " + " ".join(spl))
     
+    # require that the association is nominally significant in at least 2 cohorts
     if len(new_directions) > 1:
         spl[7] = "".join(new_directions)
         spl[13] = ",".join(new_datasets)
         spl[14] = ",".join(new_Ns)
+        # check if the effect direction is the same in all cohorts
         if new_directions.count(new_directions[0]) == len(new_directions):
             concordant = "1"
         else:

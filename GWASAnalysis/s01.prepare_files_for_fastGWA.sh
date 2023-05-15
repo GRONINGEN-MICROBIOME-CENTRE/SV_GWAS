@@ -1,6 +1,3 @@
-d="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/"
-script_dir=${d}/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/
-
 #!/usr/bin/env bash
 
 #
@@ -16,13 +13,13 @@ genotype_dir=${d}/genotypes/
 #
 
 # dSVs
-bash ${script_dir}/create_sv_name_conversion_tables.sh \
+bash ${script_dir}/utils/create_sv_name_conversion_tables.sh \
 /groups/umcg-fu/tmp01/projects/SV_GWAS/data/SvUnfiltered/SvProfile/20230116_full_deletionStructuralVariation_12388samples.tsv \
 /groups/umcg-fu/tmp01/projects/SV_GWAS/data/SvUnfiltered/SvInfo/20230116_full_Informative_species_information.tsv \
 dSV
 
 # vSVs
-bash ${script_dir}/create_sv_name_conversion_tables.sh \
+bash ${script_dir}/utils/create_sv_name_conversion_tables.sh \
 /groups/umcg-fu/tmp01/projects/SV_GWAS/data/SvUnfiltered/SvProfile/20230116_full_variableStructuralVariation_12388samples.tsv  \
 /groups/umcg-fu/tmp01/projects/SV_GWAS/data/SvUnfiltered/SvInfo/20230116_full_Informative_species_information.tsv \
 vSV
@@ -42,13 +39,16 @@ do
     # 2.1 Format covariates in plink 1.9, make sure they include all samples with relatives
     sed 's:"::g' abund/${cohort}_abundances.tsv | \
     sed '1s:.:#IID\t&:' | \
-    python ${script_dir}/rename_header_based_on_file.py stdin ${svtype}_name_conversion_table.txt 1 3 | \
-    python ${script_dir}/add_columns_from_file.py -i stdin  -f pheno/${cohort}_pheno.txt -f_m 0 -f_cols 1,2 | \
+    python ${script_dir}/utils/rename_header_based_on_file.py stdin ${svtype}_name_conversion_table.txt 1 3 | \
+    python3 ${script_dir}/utils/add_columns_from_file_v2.py -i stdin  -f pheno/${cohort}_pheno.txt -f_m 0 -f_cols 1,2 | \
     grep -w -v "NA" | \
     awk 'BEGIN {FS=OFS="\t"}; {if (NR == 1) $1 = "#FID\tIID"; else $1 = "0\t" $1; print }' \
     > ${cohort}.covariates.txt
     
-    Rscript ${script_dir}/scale_read_count.R  ${cohort}.covariates.txt ${cohort}.covariates.scaled.txt
+    # 2.2 scale read counts
+    Rscript ${script_dir}/utils/scale_read_count.R  ${cohort}.covariates.txt ${cohort}.covariates.scaled.txt
+    
+    # make the covariate file without header for fastGWA
     mv ${cohort}.covariates.scaled.txt ${cohort}.covariates.txt
     tail -n+2 ${cohort}.covariates.txt > ${cohort}.covariates.noheader.txt
 
@@ -58,17 +58,31 @@ done
 module load R/3.6.1-foss-2018a
 cd ${d}
 
+#
+# 3. Filter the SV tables (call rate, frequency). INT the vSV table
+#
+
 # dSVs:
-Rscript ${script_dir}/fastGWA/filter_SV_table.R \
+Rscript ${script_dir}/filter_SV_table.R \
 /groups/umcg-fu/tmp01/projects/SV_GWAS/data/SvUnfiltered/SvProfile/20230116_full_deletionStructuralVariation_12388samples.tsv \
 /groups/umcg-fu/tmp01/projects/SV_GWAS/data/SvUnfiltered/SvProfile/cleaned_file_list.tsv \
 dSV
 
 # vSVs:
-Rscript ${script_dir}/fastGWA/filter_SV_table.R \
+Rscript ${script_dir}/filter_SV_table.R \
 /groups/umcg-fu/tmp01/projects/SV_GWAS/data/SvUnfiltered/SvProfile/20230116_full_variableStructuralVariation_12388samples.tsv \
 /groups/umcg-fu/tmp01/projects/SV_GWAS/data/SvUnfiltered/SvProfile/cleaned_file_list.tsv \
 vSV
+
+# make the SV tables files without header for fastGWA
+for f in  *.filtered.txt
+do
+ tail -n+2 $f > ${f%txt}filtered.noheader.txt
+done
+
+#
+# 4. Count the number of overlapping samples
+#
 
 cd data_fastGWA
 for cohort in ${cohorts[@]}
@@ -76,15 +90,10 @@ do
     echo "Counting samples for ${cohort}."
     echo "N samples with SVs --- of them N with genotypes --- of them N with phenotypes --- of them N with both phenotypes and genotypes"
     
-    python3 ${script_dir}/check_sample_overlap.py ${cohort}.dSV.filtered.txt 1  ${genotype_dir}/${cohort}/with_relatives/${cohort}_filtered_withrel.fam 1 pheno/${cohort}_pheno.txt 0 "id\twith_geno\twith_pheno" > sample_ids/${cohort}_id_overlap.txt
-
-
+    python3 ${script_dir}/utils/check_sample_overlap.py ${cohort}.dSV.filtered.txt 1  ${genotype_dir}/${cohort}/with_relatives/${cohort}_filtered_withrel.fam 1 pheno/${cohort}_pheno.txt 0 "id\twith_geno\twith_pheno" > sample_ids/${cohort}_id_overlap.txt
 done
 
-for f in  *.filtered.txt
-do
- tail -n+2 $f > ${f%txt}filtered.noheader.txt
-done
+
 # make GRMs
 gcta=${d}/tools/gcta-1.94.1-linux-kernel-3-x86_64/gcta-1.94.1
 for cohort in ${cohorts[@]}
@@ -92,7 +101,6 @@ do
     geno_file=${d}genotypes/${cohort}/with_relatives/${cohort}_filtered_withrel
     grm=${d}genotypes/${cohort}/with_relatives/GCTA/GRM_${cohort}
     mkdir ${d}genotypes/${cohort}/with_relatives/GCTA/
-
     
     $gcta --bfile ${geno_file} --extract ${d}/genotypes/genotyped_SNPs.snplist --maf 0.05 --make-grm --out $grm --thread-num 2
 
@@ -102,7 +110,9 @@ do
 done
 
 
-
+#
+# 5. Submit fastGWA jobs
+#
 
 svtype="dSV"
 cd ${d}/scripts/scripts_fastGWA_${svtype}
@@ -117,7 +127,7 @@ do
     -e logs/run_${sv}.err \
     -J dsv_${sv} \
     -t 00:30:00 \
-    ${script_dir}/fastGWA/run_fastGWA.sh $sv $svtype
+    ${script_dir}/run_fastGWA.sh $sv $svtype
 done < all_bacs.${svtype}.txt
 
 svtype="vSV"
@@ -133,10 +143,13 @@ do
     -e logs/run_${sv}.err \
     -J dsv_${sv} \
     -t 00:20:00 \
-    ${script_dir}/fastGWA/run_fastGWA.sh $sv $svtype
+    ${script_dir}/run_fastGWA.sh $sv $svtype
 done < all_bacs.${svtype}.txt
 
 
+#
+# 6. Check the GWAS results files
+#
 
 result_dir="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/results_fastGWA/${svtype}/meta/"
 while read line
