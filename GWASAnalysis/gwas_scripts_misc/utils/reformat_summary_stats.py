@@ -11,32 +11,31 @@ species = sys.argv[1]
 svtype = sys.argv[2]
 basepath = sys.argv[3]
 
-annot_fname = basepath + "/data/" + svtype + "_annotation.txt"
+annot_fname = basepath + "/data/" + svtype + "_name_conversion_table.txt"
 annot_dict = {}
 with open(annot_fname, mode="rt") as annot_f:
     annot_f.readline()
     for l in annot_f:
         spl = l.rstrip().split("\t")
-        annot_dict[spl[9]] = spl[3]
+        annot_dict[spl[2]] = spl[0]
 
 
 def get_meta_maf(spl, freq_res, cohorts_dict):
-	res_freq_lst = ["NA"]*4
-	snp_cohorts = spl[8].split(",")
-	cohorts_used = spl[7]
-	
-	AC = 0
-	AN = 0
-	
-	for i, c in enumerate(snp_cohorts):
-		if not cohorts_used[i] == '?':
-			c_num = cohorts_dict[c]
-			c_res = freq_res[c_num]
-			if not c_res == 'NA':
-				freq_res_cohort = align_alleles(spl, c_res)
-				AC += freq_res_cohort[0]
-				AN += sum(freq_res_cohort)
-	return (AC/AN)
+    res_freq_lst = ["NA"]*4
+    snp_cohorts = spl[10].split(",")
+    cohorts_used = spl[7]
+    
+    AC = 0
+    AN = 0
+    for i, c in enumerate(snp_cohorts):
+        if not cohorts_used[i] == '?':
+            c_num = cohorts_dict[c]
+            c_res = freq_res[c_num]
+            if not c_res == 'NA':
+                freq_res_cohort = align_alleles(spl, c_res)
+                AC += freq_res_cohort[0]
+                AN += sum(freq_res_cohort)
+    return (float(AC)/float(AN))
 
 
 # TODO: replace DAG3 with DMP
@@ -51,9 +50,6 @@ def align_alleles(spl, c_res):
     else:
         print ("\t".join(spl) + "\t" +"\t".join(c_res.keys()))
     return(("NA", "NA"))
-    #elif ea not in c_res and oa not in c_res:
-    #    if 
-
 
 def complement(nucl):
     if nucl == 'A':
@@ -82,7 +78,7 @@ freq_dict = {}
 cohorts = ["DAG3", "LLD", "300OB", "500FG"]
 cohorts_dict = {name : num for num, name in enumerate(cohorts)}
 for c_num, c in enumerate(cohorts):
-    with gzip.open(basepath + "/genotypes/" + c + "/" + c + "_filtered.frq.counts.gz", mode="rt") as frq_f:
+    with gzip.open(basepath + "/genotypes/" + c + "/with_relatives/" + c + "_filtered_withrel.frq.counts.gz", mode="rt") as frq_f:
         frq_f.readline()
         cnt = 0
         for l in frq_f:
@@ -97,27 +93,32 @@ for c_num, c in enumerate(cohorts):
                 freq_dict[spl[1]] = res_lst
 
 
-out_f = open(basepath + "/results_all_summary_stats/" + svtype + "/meta_combined/" + species+ "/" + species + "."+ svtype + ".meta-analysis.annot.txt", "w")
-out_f.write("SV_id\tSNP\tchromosome\tposition\teffect_allele\tother_allele\tmeta_samplesize\tmeta_zscore\tmeta_pvalue\tmeta_EAF\tcohorts_with_SV\teffect_direction_per_cohort\tsamplesize_per_cohort\n")
-with gzip.open(basepath + "/results_all_summary_stats/" + svtype + "/meta_combined/" + species+ "/" + species+ "." + svtype + ".meta-analysis.txt.gz", mode="rt") as f:
-	#cnt = 0
-	f.readline()
-	for l in f:
-		spl = l.rstrip().split()
-		spl[2] = spl[2].upper()
-		spl[3] = spl[3].upper()
-		spl[4] = spl[4].replace(".00", "")
-		sv_id = annot_dict[spl[0]]
-		spl[0] = sv_id
-		AF = get_meta_maf(spl, freq_dict[spl[1]], cohorts_dict)
-	
-		chrom, pos = spl[1].split(":")
-		spl[1] = spl[1] + "\t" + chrom + "\t" + pos
-		cohorts = spl[8]
-		spl[8] = spl[7]
-		spl[7] = cohorts
-	
-		_ = out_f.write ("{0}\t{1:.6f}\t{2}\n".format("\t".join(spl[:7]), AF, "\t".join(spl[7:])))
+out_f = open(basepath + "/results_fastGWA/" + svtype + "/meta_combined/" + species+ "/" + species + "."+ svtype + ".fastGWA.meta-analysis.annot.txt", "w")
+
+out_f.write("SV_id\tSNP\tSNP_chromosome\tSNP_position_hg19\teffect_allele\tother_allele\tmeta_beta\tmeta_SE\tmeta_pvalue\tmeta_EAF\tcohorts_with_SV\theterogeneity_pvalue\tmeta_samplesize\teffect_direction_per_cohort\tsamplesize_per_cohort\n")
+with gzip.open(basepath + "/results_fastGWA/" + svtype + "/meta_combined/" + species+ "/" + species+ "." + svtype + ".fastGWA.meta-analysis.txt.gz", mode="rt") as f:
+    #cnt = 0
+    f.readline()
+    for l in f:
+        spl = l.rstrip().split()
+        spl[2] = spl[2].upper()
+        spl[3] = spl[3].upper()
+        
+        sv_id = annot_dict[spl[0]]
+        spl[0] = sv_id
+        #print(freq_dict[spl[1]])
+        
+        directions = [direction for direction in spl[7] if not direction == "?"]
+        if len(directions) == 1:
+            continue
+        AF = get_meta_maf(spl, freq_dict[spl[1]], cohorts_dict)
+        chrom, pos = spl[1].split(":")
+        spl[1] = spl[1] + "\t" + chrom + "\t" + pos
+        cohorts = spl[10].replace("DAG3", "DMP")
+        spl[10] = spl[7]
+        spl[7] = cohorts
+    
+        _ = out_f.write ("{0}\t{1:.6f}\t{2}\n".format("\t".join(spl[:7]), AF, "\t".join(spl[7:])))
 
 out_f.close()
 
