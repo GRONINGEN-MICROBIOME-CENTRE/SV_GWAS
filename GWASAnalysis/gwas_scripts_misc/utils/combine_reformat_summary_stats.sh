@@ -34,5 +34,6 @@ gzip  ${d}/${svtype}/meta/${sp}\:*/*meta_res.annot.tbl
 
 python3 ${script_dir}/reformat_summary_stats.py $sp ${svtype} /groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/
 
+rm ${meta_comb_dir}/${sp}.${svtype}.fastGWA.meta-analysis.txt.gz
 gzip ${meta_comb_dir}/${sp}.${svtype}.fastGWA.meta-analysis.annot.txt
     
