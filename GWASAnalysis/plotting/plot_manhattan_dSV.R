@@ -38,7 +38,7 @@ ggplot(don, aes(x=BPcum, y=-log10(P))) +
   # Show all points
   geom_point( aes(color=as.factor(CHR)),  size=1) +
   scale_color_manual(values = rep(c("#495DA0", "#74AFDF"), 22 )) +
-  geom_hline(yintercept=7.30103, color = "#EF3B2C", linewidth = 0.3) +
+  geom_hline(yintercept=10.52288, color = "#EF3B2C", linewidth = 0.3) +
   # custom X axis:
   xlab("Chromosome") +
   scale_x_continuous( label = axisdf$CHR, breaks= axisdf$center ) +
