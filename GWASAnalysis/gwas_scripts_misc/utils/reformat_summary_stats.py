@@ -109,7 +109,9 @@ with gzip.open(basepath + "/results_fastGWA/" + svtype + "/meta_combined/" + spe
         #print(freq_dict[spl[1]])
         
         directions = [direction for direction in spl[7] if not direction == "?"]
-        if len(directions) == 1:
+        if len(directions) == 1: # if association tested in one cohort only, skip the line
+            continue
+        if float(spl[8]) < 0.05: # if heterogeneity P < 0.05 skip the line
             continue
         AF = get_meta_maf(spl, freq_dict[spl[1]], cohorts_dict)
         chrom, pos = spl[1].split(":")
