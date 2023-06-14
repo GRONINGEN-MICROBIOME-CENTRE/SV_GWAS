@@ -4,7 +4,7 @@ library(dplyr)
 library(ggbreak)
 
 setwd('/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/plots')
-d <- read.delim("vSVs_for_manhattan.txt", header = F, as.is = T, sep = "\t", check.names = F)
+d <- read.delim("vSVs_for_manhattan.txt", header =T, as.is = T, sep = "\t", check.names = F)
 colnames(d) <- c("bac","SNP", "CHR", "BP", "P")
 d$BP <- as.numeric(d$BP)
 
