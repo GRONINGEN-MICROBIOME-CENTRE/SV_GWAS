@@ -1,7 +1,7 @@
 ---
 title: "Data cleaning"
 author: "Daoming Wang"
-date: "2021/03/25"
+date: "2023/04/25"
 output:
   html_document: 
     theme: flatly
@@ -33,51 +33,148 @@ suppressMessages(source("functions.R"))
 
 ```{r 1.2, echo=TRUE}
 ## blood type
-bt_dag3<-read.csv("00.rawData/blood_type/DAG3.ABO_bloodgroup+FUT2_status.txt",sep = "\t",header = T)
+bt_dag3<-read.csv("00.rawData/bloodType/DAG3.ABO_bloodgroup+FUT2_status.txt",sep = "\t",header = T)
 
 # SV 
-vsv_info<-read.csv("../../202102_SV_full/history/analysis.v1.0/SV_full/01.cleanData/SV_info/20211212_full_vsgv_info_anno.tsv", sep = "\t", header = T, quote = "")
-dsv_info<-read.csv("../../202102_SV_full/history/analysis.v1.0/SV_full/01.cleanData/SV_info/20211212_full_dsgv_info_anno.tsv", sep = "\t", header = T, quote = "")
+vsv_info<-read.csv("../../202102_SV_full/SV_full/01.cleanData/SV_info/20230116_full_vsgv_info_anno_ld.tsv", sep = "\t", header = T, quote = "")
+dsv_info<-read.csv("../../202102_SV_full/SV_full/01.cleanData/SV_info/20230116_full_dsgv_info_anno_ld.tsv", sep = "\t", header = T, quote = "")
 
-load("../../202102_SV_full/SV_full/01.cleanData/SV_full/dsgv_full.RData")
-load("../../202102_SV_full/SV_full/01.cleanData/SV_full/vsgv_full.RData")
-load("../../202102_SV_full/SV_full/01.cleanData/SV_dag3/dsgv_dag3.RData")
 load("../../202102_SV_full/SV_full/01.cleanData/SV_dag3/vsgv_dag3.RData")
-load("../../202102_SV_full/SV_full/01.cleanData/SV_hmp2/dsgv_hmp2_full.RData")
-load("../../202102_SV_full/SV_full/01.cleanData/SV_hmp2/vsgv_hmp2_full.RData")
+load("../../202102_SV_full/SV_full/01.cleanData/SV_dag3/dsgv_dag3.RData")
+load("../../202102_SV_full/SV_full/01.cleanData/SV_lld1/vsgv_lld1.RData")
+load("../../202102_SV_full/SV_full/01.cleanData/SV_lld1/dsgv_lld1.RData")
+load("../../202102_SV_full/SV_full/01.cleanData/SV_ffg/vsgv_ffg.RData")
+load("../../202102_SV_full/SV_full/01.cleanData/SV_ffg/dsgv_ffg.RData")
+load("../../202102_SV_full/SV_full/01.cleanData/SV_tob/vsgv_tob.RData")
+load("../../202102_SV_full/SV_full/01.cleanData/SV_tob/dsgv_tob.RData")
+load("../../202102_SV_full/SV_full/01.cleanData/SV_tzfg/vsgv_tzfg.RData")
+load("../../202102_SV_full/SV_full/01.cleanData/SV_tzfg/dsgv_tzfg.RData")
 
-#dag3_abun<-read.table("../../202102_SV_full/SV_full/01.cleanData/mbio/DAG3_SV_species_8047samples.tsv",check.names = F)
+sv_anno <- read.table("00.rawData/info/SV_577_579_anno.tsv", sep = "\t", header = T,check.names = F) %>% .[which(grepl("step_", .$`GalNAc_Step/Role`)),]
+load("../../202102_SV_full/SV_full/01.cleanData/SV_full/all_msv_dist.RData")
+load("00.rawData/database/svAnnoDb.RData")
 
-#load("../../202102_SV_full/SV_full/04.Clustering_analysis/all_msv_wsd_res_ps0.55.RData")
-load("../../202102_SV_full/SV_full/04.Clustering_analysis/all_msv_wsd_res_ps0.55.RData")
+# mbio
+taxa.dag3 <- read.table("00.rawData/mbio/microbiome_8208samples_S_unfiltered.csv", check.names = F)[,-c(597)]
+taxa.f.dag3 <- read.table("00.rawData/mbio/microbiome_8208samples_F_unfiltered.csv", check.names = F)[,-c(90)]
+gene.dag3 <- read.table("00.rawData/shortbred/shortbred_final.res", header = T,row.names = "Family", check.names = F) %>% t
+
+# abundance
+abun_dag3<-read.table("../../202102_SV_full/SV_full/01.cleanData/mbio/DAG3_SV_species_8534samples.tsv",
+                      sep = "\t", check.names = F)
+abun_lld1<-read.table("../../202102_SV_full/SV_full/01.cleanData/mbio/LLD1_SV_species_1135samples.tsv",
+                      sep = "\t", check.names = F)
+abun_ffg<-read.table("../../202102_SV_full/SV_full/01.cleanData/mbio/500FG_SV_species_450samples.tsv",
+                      sep = "\t", check.names = F)
+abun_tob<-read.table("../../202102_SV_full/SV_full/01.cleanData/mbio/300OB_SV_species_302samples.tsv",
+                      sep = "\t", check.names = F)
+
 
 # GWAS
-vsv_gwas<-read.csv("00.rawData/gwas_res/vsv_GWAS.txt", sep = "\t",header = T,quote = "")
-dsv_gwas<-read.csv("00.rawData/gwas_res/dsv_GWAS.txt", sep = "\t",header = T,quote = "") %>% .[-c(90:94),]
+vsgv_select <- read.table("00.rawData/info/vSV_selection.txt", sep = "\t", header = T, quote = "")
+dsgv_select <- read.table("00.rawData/info/dSV_selection.txt", sep = "\t", header = T, quote = "")
 
-# HMP2
-metatrans_path_hmp2<-read.csv("00.rawData/hmp2/pathabundances_3.tsv",sep = "\t",header = T, row.names = "Feature.Sample",quote = "") %>% .[grep("UNMAPPED|UNINTEGRATED", rownames(.), invert = T),]
-metatrans_ec3_hmp2<-read.csv("00.rawData/hmp2/ecs_3.tsv",sep = "\t",header = T, row.names = "Feature.Sample",quote = "") %>% 
-  .[grep("UNGROUPED", rownames(.), invert = T),] %>%.[-c(1:2),]
-metatrans_gene_fp_hmp2<-read.csv("00.rawData/hmp2/Fp.genefamilies.tsv",sep = "\t",header = T, row.names = "X..Gene.Family",quote = "")
-info_hmp2<-read.csv("00.rawData/hmp2/hmp2_metadata.csv", sep = ",", header = T, quote = "") 
+vsv_gwas<-read.csv("00.rawData/gwasRes/vsv_GWAS.txt", sep = "\t",header = T,quote = "", check.names = F)
+dsv_gwas<-read.csv("00.rawData/gwasRes/dsv_GWAS.txt", sep = "\t",header = T,quote = "", check.names = F) 
 ```
 
 ## 2 Clean data
-
-### 2.1 Extract SVs in GWAS signals
+### 2.1 Extract samples used in study
 
 ```{r 2.1}
-vsv_gwas_anno<-left_join(vsv_gwas, vsv_info, by = c("sv_id" = "SV_Name"))
-dsv_gwas_anno<-left_join(dsv_gwas, dsv_info, by = c("sv_id" = "SV_Name"))
+# SV
+vsgv_dag3 <- vsgv_dag3[rownames(taxa.dag3),]
+dsgv_dag3 <- dsgv_dag3[rownames(taxa.dag3),]
 
-assoc_vsv_uniq<-unique(vsv_gwas_anno$sv_id)
-assoc_dsv_uniq<-unique(dsv_gwas_anno$sv_id)
+vsgv_full <- rbind(vsgv_dag3, vsgv_lld1, vsgv_ffg, vsgv_tob)
+dsgv_full <- rbind(dsgv_dag3, dsgv_lld1, dsgv_ffg, dsgv_tob)
 
-assoc_vsv_id<-unique(vsv_gwas_anno$sv_id)
-assoc_dsv_id<-unique(dsv_gwas_anno$sv_id)
-abo_vsv_id<-vsv_gwas_anno %>% filter(Overlapping_genes=="ABO") %>% select(sv_id) %>% unique %>% .$sv_id
-abo_dsv_id<-dsv_gwas_anno %>% filter(Overlapping_genes=="ABO") %>% select(sv_id) %>% unique %>% .$sv_id
+if(!dir.exists("01.cleanData/SV")){dir.create("01.cleanData/SV")}
+save(vsgv_dag3, file = "01.cleanData/SV/vsgv_dag3.RData")
+save(dsgv_dag3, file = "01.cleanData/SV/dsgv_dag3.RData")
+save(vsgv_lld1, file = "01.cleanData/SV/vsgv_lld1.RData")
+save(dsgv_lld1, file = "01.cleanData/SV/dsgv_lld1.RData")
+save(vsgv_ffg, file = "01.cleanData/SV/vsgv_ffg.RData")
+save(dsgv_ffg, file = "01.cleanData/SV/dsgv_ffg.RData")
+save(vsgv_tob, file = "01.cleanData/SV/vsgv_tob.RData")
+save(dsgv_tob, file = "01.cleanData/SV/dsgv_tob.RData")
+
+save(vsgv_full, file = "01.cleanData/SV/vsgv_full.RData")
+save(dsgv_full, file = "01.cleanData/SV/dsgv_full.RData")
+
+# Abundance
+abun_dag3 <- abun_dag3[rownames(taxa.dag3),]
+abun_full <- rbind(abun_dag3, abun_lld1, abun_ffg, abun_tob)
+
+if(!dir.exists("01.cleanData/SV_abun")){dir.create("01.cleanData/SV_abun")}
+save(abun_dag3, file = "01.cleanData/SV_abun/abun_dag3.RData")
+save(abun_lld1, file = "01.cleanData/SV_abun/abun_lld1.RData")
+save(abun_ffg, file = "01.cleanData/SV_abun/abun_ffg.RData")
+save(abun_tob, file = "01.cleanData/SV_abun/abun_tob.RData")
+save(abun_full, file = "01.cleanData/SV_abun/abun_full.RData")
+```
+
+
+### 2.2 Extract SVs in GWAS signals
+
+```{r 2.2}
+# Annotation
+vsv_gwas_anno<-left_join(vsv_gwas, vsv_info, by = c("SV_name" = "SV_Name"))
+dsv_gwas_anno<-left_join(dsv_gwas, dsv_info, by = c("SV_name" = "SV_Name"))
+
+
+# Add annotation information
+# vsv
+vsv_gwas_anno$Gene <- vsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$gene.df.anno, tax = 1, geneName = 2, start = 4, end = 5, anno.col = 2, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+vsv_gwas_anno$Product.mixed <- vsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$gene.df.anno, tax = 1, geneName = 2, start = 4, end = 5, anno.col = 25, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+vsv_gwas_anno$KoNumber <- vsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$gene.df.anno, tax = 1, geneName = 2, start = 4, end = 5, anno.col = 27, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+
+vsv_gwas_anno$Gene.bakta <- vsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$bakta.full, tax = 1, geneName = 10, start = 4, end = 5, anno.col = 10, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+vsv_gwas_anno$Product.bakta <- vsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$bakta.full, tax = 1, geneName = 10, start = 4, end = 5, anno.col = 12, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+vsv_gwas_anno$UniRef50.bakta <- vsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$bakta.full, tax = 1, geneName = 10, start = 4, end = 5, anno.col = 21, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+vsv_gwas_anno$GeneSymbol <- vsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$bakta.full, tax = 1, geneName = 10, start = 4, end = 5, anno.col = 16, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+vsv_gwas_anno$HumanProteinInteraction <- vsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$bakta.full, tax = 1, geneName = 10, start = 4, end = 5, anno.col = 22, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+
+write.table(vsv_gwas_anno, "01.cleanData/assoc_SV/vsv_gwas_anno.tsv",sep = "\t",col.names = T, row.names = F,quote = F)
+save(vsv_gwas_anno, file = "01.cleanData/assoc_SV/vsv_gwas_anno.RData")
+
+# dsv
+dsv_gwas_anno$Gene <- dsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$gene.df.anno, tax = 1, geneName = 2, start = 4, end = 5, anno.col = 2, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+dsv_gwas_anno$Product.mixed <- dsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$gene.df.anno, tax = 1, geneName = 2, start = 4, end = 5, anno.col = 25, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+dsv_gwas_anno$KoNumber <- dsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$gene.df.anno, tax = 1, geneName = 2, start = 4, end = 5, anno.col = 27, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+
+dsv_gwas_anno$Gene.bakta <- dsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$bakta.full, tax = 1, geneName = 10, start = 4, end = 5, anno.col = 10, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+dsv_gwas_anno$Product.bakta <- dsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$bakta.full, tax = 1, geneName = 10, start = 4, end = 5, anno.col = 12, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+dsv_gwas_anno$UniRef50.bakta <- dsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$bakta.full, tax = 1, geneName = 10, start = 4, end = 5, anno.col = 21, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+dsv_gwas_anno$GeneSymbol <- dsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$bakta.full, tax = 1, geneName = 10, start = 4, end = 5, anno.col = 16, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+dsv_gwas_anno$HumanProteinInteraction <- dsv_gwas_anno$SV_ID %>% as.list %>% lapply(getSvAnno, geneAnno = svAnnoDb$bakta.full, tax = 1, geneName = 10, start = 4, end = 5, anno.col = 22, flanking = 1, shuffling = F) %>%
+  map_chr(~paste(.,collapse = "|"))
+write.table(dsv_gwas_anno, "01.cleanData/assoc_SV/dsv_gwas_anno.tsv",sep = "\t",col.names = T, row.names = F,quote = F)
+save(dsv_gwas_anno, file = "01.cleanData/assoc_SV/dsv_gwas_anno.RData")
+
+# Extract SVs
+assoc_vsv_uniq<-unique(vsv_gwas_anno$SV_name)
+assoc_dsv_uniq<-unique(dsv_gwas_anno$SV_name)
+
+assoc_vsv_id<-unique(vsv_gwas_anno$SV_name)
+assoc_dsv_id<-unique(dsv_gwas_anno$SV_name)
+abo_vsv_id<-vsv_gwas_anno %>% filter(Overlapping_genes=="ABO") %>% select(SV_name) %>% unique %>% .$SV_name
+abo_dsv_id<-dsv_gwas_anno %>% filter(Overlapping_genes=="ABO") %>% select(SV_name) %>% unique %>% .$SV_name
 
 ## Full
 vsgv_full_assoc<-vsgv_full[,assoc_vsv_id]
@@ -98,10 +195,10 @@ save(dsgv_full_abo, file = "01.cleanData/assoc_SV/dsgv_full_abo.RData")
 
 
 ## DAG3
-vsgv_dag3_assoc<-vsgv_dag3[,assoc_vsv_id]
-dsgv_dag3_assoc<-dsgv_dag3[,assoc_dsv_id]
-vsgv_dag3_abo<-vsgv_dag3[,abo_vsv_id] %>% as.data.frame;colnames(vsgv_dag3_abo)<-abo_vsv_id
-dsgv_dag3_abo<-dsgv_dag3[,abo_dsv_id]
+vsgv_dag3_assoc<-vsgv_dag3[rownames(taxa.dag3),assoc_vsv_id]
+dsgv_dag3_assoc<-dsgv_dag3[rownames(taxa.dag3),assoc_dsv_id]
+vsgv_dag3_abo<-vsgv_dag3[rownames(taxa.dag3),abo_vsv_id] %>% as.data.frame;colnames(vsgv_dag3_abo)<-abo_vsv_id
+dsgv_dag3_abo<-dsgv_dag3[rownames(taxa.dag3),abo_dsv_id]
 
 if(!dir.exists("01.cleanData/")){dir.create("01.cleanData/")}
 if(!dir.exists("01.cleanData/assoc_SV")){dir.create("01.cleanData/assoc_SV")}
@@ -113,105 +210,26 @@ write.table(vsgv_dag3_abo, "01.cleanData/assoc_SV/vsgv_dag3_abo.tsv", sep = "\t"
 save(vsgv_dag3_abo, file = "01.cleanData/assoc_SV/vsgv_dag3_abo.RData")
 write.table(dsgv_dag3_abo, "01.cleanData/assoc_SV/dsgv_dag3_abo.tsv", sep = "\t")
 save(dsgv_dag3_abo, file = "01.cleanData/assoc_SV/dsgv_dag3_abo.RData")
-
-## HMP2
-save(dsgv_hmp2_full, file = "01.cleanData/hmp2/dsgv_hmp2_full.RData")
-
-vsgv_hmp2_full_assoc<-vsgv_hmp2_full[,assoc_vsv_id]
-dsgv_hmp2_full_assoc<-dsgv_hmp2_full[,assoc_dsv_id]
-vsgv_hmp2_full_abo<-vsgv_hmp2_full[,abo_vsv_id] %>% as.data.frame;colnames(vsgv_hmp2_full_abo)<-abo_vsv_id
-dsgv_hmp2_full_abo<-dsgv_hmp2_full[,abo_dsv_id]
-
-if(!dir.exists("01.cleanData/")){dir.create("01.cleanData/")}
-if(!dir.exists("01.cleanData/assoc_SV")){dir.create("01.cleanData/assoc_SV")}
-write.table(vsgv_hmp2_full_assoc, "01.cleanData/assoc_SV/vsgv_hmp2_full_assoc.tsv", sep = "\t")
-save(vsgv_hmp2_full_assoc, file = "01.cleanData/assoc_SV/vsgv_hmp2_full_assoc.RData")
-write.table(dsgv_hmp2_full_assoc, "01.cleanData/assoc_SV/dsgv_hmp2_full_assoc.tsv", sep = "\t")
-save(dsgv_hmp2_full_assoc, file = "01.cleanData/assoc_SV/dsgv_hmp2_full_assoc.RData")
-write.table(vsgv_hmp2_full_abo, "01.cleanData/assoc_SV/vsgv_hmp2_full_abo.tsv", sep = "\t")
-save(vsgv_hmp2_full_abo, file = "01.cleanData/assoc_SV/vsgv_hmp2_full_abo.RData")
-write.table(dsgv_hmp2_full_abo, "01.cleanData/assoc_SV/dsgv_hmp2_full_abo.tsv", sep = "\t")
-save(dsgv_hmp2_full_abo, file = "01.cleanData/assoc_SV/dsgv_hmp2_full_abo.RData")
-```
-
-### 2.2 Clean metatranscriptome data
-
-```{r 2.2}
-info_hmp2_metageno  <-info_hmp2 %>% filter(data_type=="metagenomics")
-info_hmp2_metatrans <-info_hmp2 %>% filter(data_type=="metatranscriptomics")
-
-if(!dir.exists("01.cleanData/")){dir.create("01.cleanData/")}
-if(!dir.exists("01.cleanData/hmp2")){dir.create("01.cleanData/hmp2")}
-write.table(info_hmp2_metageno, "01.cleanData/hmp2/info_hmp2_metageno.tsv", sep = "\t", row.names = F, col.names = T, quote = F)
-
-# clean metatranscriptome
-# path
-colnames(metatrans_path_hmp2) <- colnames(metatrans_path_hmp2) %>% str_replace_all("_pathabundance_cpm", "")
-metatrans_path_hmp2<-t(metatrans_path_hmp2)
-
-metatrans_path_hmp2 <- match(rownames(dsgv_hmp2_full), info_hmp2_metageno$External.ID) %>% info_hmp2_metageno$site_sub_coll[.] %>% match(., info_hmp2_metatrans$site_sub_coll) %>% info_hmp2_metatrans$External.ID[.] %>% match(., rownames(metatrans_path_hmp2)) %>% metatrans_path_hmp2[.,]
-rownames(metatrans_path_hmp2)<-rownames(dsgv_hmp2_full)
-
-save(metatrans_path_hmp2, file = "01.cleanData/hmp2/metatrans_path_hmp2.RData")
-
-# ec
-colnames(metatrans_ec3_hmp2) <- colnames(metatrans_ec3_hmp2) %>% str_replace_all("_level4ec", "")
-metatrans_ec3_hmp2<-t(metatrans_ec3_hmp2)
-
-metatrans_ec3_hmp2 <- match(rownames(dsgv_hmp2_full), info_hmp2_metageno$External.ID) %>% info_hmp2_metageno$site_sub_coll[.] %>% match(., info_hmp2_metatrans$site_sub_coll) %>% info_hmp2_metatrans$External.ID[.] %>% match(., rownames(metatrans_ec3_hmp2)) %>% metatrans_ec3_hmp2[.,]
-rownames(metatrans_ec3_hmp2)<-rownames(dsgv_hmp2_full)
-
-save(metatrans_ec3_hmp2, file = "01.cleanData/hmp2/metatrans_ec3_hmp2.RData")
-
-# gene family
-colnames(metatrans_gene_fp_hmp2) <- colnames(metatrans_gene_fp_hmp2) %>% str_replace_all("_Abundance.RPKs", "")
-rownames(metatrans_gene_fp_hmp2) <- rownames(metatrans_gene_fp_hmp2) %>% str_replace_all("\\|.*", "") %>% str_replace_all("UniRef90_", "")
-metatrans_gene_fp_hmp2<-t(metatrans_gene_fp_hmp2)
-
-metatrans_gene_fp_hmp2 <- match(rownames(dsgv_hmp2_full), info_hmp2_metageno$External.ID) %>% info_hmp2_metageno$site_sub_coll[.] %>% match(., info_hmp2_metatrans$site_sub_coll) %>% info_hmp2_metatrans$External.ID[.] %>% match(., rownames(metatrans_gene_fp_hmp2)) %>% metatrans_gene_fp_hmp2[.,]
-rownames(metatrans_gene_fp_hmp2)<-rownames(dsgv_hmp2_full)
-
-save(metatrans_gene_fp_hmp2, file = "01.cleanData/hmp2/metatrans_gene_fp_hmp2.RData")
-
-# extract heathy individuals
-info_hmp2_nonIBD_metageno<-info_hmp2_metageno %>% filter(diagnosis=="nonIBD")
-# path
-metatrans_path_hmp2_nonIBD<-metatrans_path_hmp2[match(info_hmp2_nonIBD_metageno$External.ID, rownames(metatrans_path_hmp2)), ]
-rownames(metatrans_path_hmp2_nonIBD)<-info_hmp2_nonIBD_metageno$External.ID
-# ec3
-metatrans_ec3_hmp2_nonIBD<-metatrans_ec3_hmp2[match(info_hmp2_nonIBD_metageno$External.ID, rownames(metatrans_ec3_hmp2)), ]
-rownames(metatrans_ec3_hmp2_nonIBD)<-info_hmp2_nonIBD_metageno$External.ID
-# gene
-metatrans_gene_fp_hmp2_nonIBD<-metatrans_gene_fp_hmp2[match(info_hmp2_nonIBD_metageno$External.ID, rownames(metatrans_gene_fp_hmp2)), ]
-rownames(metatrans_gene_fp_hmp2_nonIBD)<-info_hmp2_nonIBD_metageno$External.ID
-
-
-write.table(info_hmp2_nonIBD_metageno, "01.cleanData/hmp2/info_hmp2_nonIBD_metageno.tsv", sep = "\t", row.names = F, col.names = T, quote = F)
-save(metatrans_path_hmp2_nonIBD, file = "01.cleanData/hmp2/metatrans_path_hmp2_nonIBD.RData")
-save(metatrans_ec3_hmp2_nonIBD, file = "01.cleanData/hmp2/metatrans_ec3_hmp2_nonIBD.RData")
-save(metatrans_gene_fp_hmp2_nonIBD, file = "01.cleanData/hmp2/metatrans_gene_fp_hmp2_nonIBD.RData")
-
-# gene family names
-metatrans_gene_fp_hmp2_nonIBD.id<-data.frame(colnames(metatrans_gene_fp_hmp2_nonIBD))
-write.table(metatrans_gene_fp_hmp2_nonIBD.id, "01.cleanData/hmp2/metatrans_gene_fp_hmp2_nonIBD.gene.tsv",row.names = F, col.names = F, quote = F)
 ```
 
 ### 2.3 Extract population genetic structure of Fp
 
 ```{r 2.3}
-all_msv_wsd_res.fp<-all_msv_wsd_res[[64]]
+msv_dist.fp <- all_msv_dist[[65]]
+msv_dist.fp.dag3 <- msv_dist.fp[intersect(rownames(vsgv_dag3), rownames(msv_dist.fp)), 
+                                intersect(rownames(vsgv_dag3), colnames(msv_dist.fp))]
 
-if(!dir.exists("01.cleanData/full")){dir.create("01.cleanData/full")}
-save(all_msv_wsd_res.fp, file = "01.cleanData/full/all_msv_wsd_res.fp.RData")
-
+if(!dir.exists("01.cleanData/popStruc")){dir.create("01.cleanData/popStruc")}
+save(msv_dist.fp, file = "01.cleanData/popStruc/msv_dist.fp.RData")
+save(msv_dist.fp.dag3, file = "01.cleanData/popStruc/msv_dist.fp.dag3.RData")
 ```
 
 ### 2.4 Clean ABO blood type data
 
 ```{r 2.4}
-bt_dag3<-bt_dag3[match(rownames(dsgv_dag3_abo), bt_dag3$sample),]
-rownames(bt_dag3)<-rownames(dsgv_dag3_abo)
-bt_dag3$sample<-rownames(dsgv_dag3_abo)
+bt_dag3<-bt_dag3[match(rownames(taxa.dag3), bt_dag3$sample),]
+rownames(bt_dag3)<-rownames(taxa.dag3)
+bt_dag3$sample<-rownames(taxa.dag3)
 
 bt_dag3$A_antigen<-0
 bt_dag3$A_antigen[bt_dag3$Bloodtype == "A" | bt_dag3$Bloodtype == "AB"]<-1
@@ -224,8 +242,7 @@ bt_dag3$FUT2_secretor_status[bt_dag3$FUT2_secretor_status=="secretor"] <- 1
 bt_dag3$FUT2_secretor_status<-as.numeric(bt_dag3$FUT2_secretor_status)
 
 
-if(!dir.exists("01.cleanData/blood_type")){dir.create("01.cleanData/blood_type")}
-save(bt_dag3, file = "01.cleanData/blood_type/bt_dag3.RData")
-write.table(bt_dag3, "01.cleanData/blood_type/bt_dag3.tsv", sep = "\t", row.names = T, col.names = T, quote = F )
-
+if(!dir.exists("01.cleanData/bloodType")){dir.create("01.cleanData/bloodType")}
+save(bt_dag3, file = "01.cleanData/bloodType/bt_dag3.RData")
+write.table(bt_dag3, "01.cleanData/bloodType/bt_dag3.tsv", sep = "\t", row.names = T, col.names = T, quote = F )
 ```

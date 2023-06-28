@@ -1,0 +1,435 @@
+---
+title: "Experiment"
+author: "Daoming Wang, Lei Liu"
+date: "2023/6/13"
+output:
+  html_document: 
+    theme: flatly
+    highlight: espresso
+    toc: true
+    toc_depth: 4
+    toc_float: true
+  word_document: default
+  pdf_document:
+    includes:
+      in_header: header.tex
+      keep_tex: yes
+      latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1 Preparation
+
+### 1.1 Import
+
+```{r 1.1, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+suppressMessages(source("functions.R"))
+```
+
+### 1.2 Inputs
+
+```{r 1.2, echo=TRUE}
+growth <- read.table("00.rawData/experiment/GROWTH_new.txt", header=TRUE,stringsAsFactors = F,sep="\t")
+rpoA <- read.table("00.rawData/experiment/rpoA.txt", header=TRUE,stringsAsFactors = F,sep="\t")
+```
+
+## 2 Growth
+
+```{r 2}
+if(!dir.exists("07.Experiment")){dir.create("07.Experiment")}
+
+SE <- summarySE(growth, measurevar="OD600", groupvars=c("Strains","Time","Sugars","Strain"))
+
+###########HTF-383############
+SE_383 <- subset(SE, SE$Strains %in% "HTF383")
+SE_383_GalNAc <- subset(SE_383, SE_383$Sugars %in% "GalNAc")
+f <- ggplot(SE_383_GalNAc, aes(x=Time, y=OD600, color="red"))+ 
+  geom_errorbar(aes(ymin=OD600-se, ymax=OD600+se), width=.1,position=position_dodge(0.05)) +
+  geom_line(linetype= c("dashed")) + 
+  geom_point(size=1)+theme_tufte()+
+  theme(title =element_text(size=8, face='bold'),
+        axis.title.x = element_text(size=11, face="bold"),
+        axis.title.y = element_text(size=11, face="bold"),
+        axis.text.y = element_text(size=7.5),
+        axis.text.x = element_text(size=7.5),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        legend.key.size = unit(0.4, 'cm'),
+        legend.text = element_text(size=7.5))+
+  labs(title="HTF-383 (GalNAc)",x="Time (h)", y = "OD600")+
+  scale_color_manual(values=c('red','black'))+
+  theme()+
+  scale_x_continuous(breaks=seq(0, 40, 4))+
+  scale_y_continuous(limits = c(0.08,0.8),breaks=seq(0.0,1, 0.2))
+
+ggsave("07.Experiment/HTF-383.pdf", width =4, height = 4)
+
+########### GalNAc #########
+SE1 <- subset(SE,SE$Time %in% c("0","4","6","8","10","12","14","16","18","20","22","24") )
+
+SE3 <- subset(SE1,SE1$Sugars %in% c("GalNAc") )
+f2 <- ggplot(SE3, aes(x=Time, y=OD600, group =Strains,color = Strain))+ 
+  geom_errorbar(aes(ymin=OD600-se, ymax=OD600+se), width=.1,position=position_dodge(0.05)) +
+  geom_line(linetype= c("dashed"))+
+  geom_point()+theme_classic()+
+  theme(title =element_text(size=9, face='bold'),
+        axis.title.x = element_text(size=11, face="bold"),
+        axis.title.y = element_text(size=11, face="bold"),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = c(0.32,0.9),
+        legend.title=element_blank())+
+  labs(title="GalNAc",x="Time (h)", y = "OD600")+
+  scale_color_manual(values=c('red','black'))+
+  scale_x_continuous( limits=c(0,28),breaks=seq(0, 26, 4))+
+  scale_y_continuous(limits = c(0.08,1.1),breaks=seq(0.0,1.1, 0.1))
+
+ggsave("07.Experiment/GalNAc.pdf", width=4, height=4)
+
+################ Gal #######
+
+SE4 <- subset(SE1,SE1$Sugars %in% c("Gal") )
+
+f3 <- ggplot(SE4, aes(x=Time, y=OD600, group =Strains, color= Strain))+ 
+  geom_errorbar(aes(ymin=OD600-se, ymax=OD600+se), width=.1,position=position_dodge(0.05)) +
+  geom_line(linetype= c("dashed")) + 
+  geom_point()+theme_classic()+
+  theme(title =element_text(size=9, face='bold'),
+        axis.title.x = element_text(size=11, face="bold"),
+        axis.title.y = element_text(size=11, face="bold"),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.title=element_blank(),
+        legend.position = c(0.32,0.9))+
+  labs(title="Gal",x="Time (h)", y = "OD600")+
+  scale_color_manual(values=c('red','black'))+
+  scale_x_continuous(limits=c(0,28),breaks=seq(0, 26, 4))+
+  scale_y_continuous(limits = c(0.08,1.1),breaks=seq(0.0,1.2, 0.1))
+
+ggsave("07.Experiment/Gal.pdf", width=4, height=4)
+```
+
+## 3 qPCR
+
+```{r 3}
+####gene lacC###
+rpoA_lacC <- subset(rpoA, rpoA$Gene %in% "lacC")
+SE_lacC <- summarySE(rpoA_lacC , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+my_comparisons <- list( c("HTF-495GalNAc","ATCC27768GalNAc"))
+
+SE_lacC$comparison <- factor(SE_lacC$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_lacC$Medium <- factor(SE_lacC$Medium, levels= c("Glucose","GalNAc"))
+
+p_lacC <- ggplot(SE_lacC, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_lacC,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  scale_fill_brewer(palette="Paired")+
+  geom_jitter(data=rpoA_lacC, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position =c(0.2,0.9),
+        legend.key.size = unit(0.5, 'cm'), 
+        legend.key.height = unit(0.5, 'cm'), 
+        legend.key.width = unit(0.5, 'cm'), 
+        legend.title = element_text(size=6), 
+        legend.text = element_text(size=6),
+        text = element_text(size = 8))+ 
+  stat_compare_means(data=rpoA_lacC,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=F,size= 3,comparisons = my_comparisons)+
+  labs(title = "lacC",x = "", y = "Fold Change")+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+  
+
+
+###gene ptsH###
+rpoA_ptsH <- subset(rpoA, rpoA$Gene %in% "ptsH")
+SE_ptsH <- summarySE(rpoA_ptsH , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+
+SE_ptsH$comparison <- factor(SE_ptsH$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_ptsH$Medium <- factor(SE_ptsH$Medium, levels= c("Glucose","GalNAc"))
+
+p_ptsH <- ggplot(SE_ptsH, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_ptsH,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  geom_jitter(data=rpoA_ptsH, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        text = element_text(size = 8)) +  
+  labs(title = "ptsH", x = "", y = "Fold Change")+
+  scale_fill_brewer(palette="Paired")+
+  stat_compare_means(data=rpoA_ptsH,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=F,size= 3,comparisons = my_comparisons)+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+
+
+
+### gene kbaZ###
+rpoA_kbaZ <- subset(rpoA, rpoA$Gene %in% "kbaZ")
+SE_kbaZ <- summarySE(rpoA_kbaZ , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+
+SE_kbaZ$comparison <- factor(SE_kbaZ$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_kbaZ$Medium <- factor(SE_kbaZ$Medium, levels= c("Glucose","GalNAc"))
+
+p_kbaZ <- ggplot(SE_kbaZ, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_kbaZ,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  geom_jitter(data=rpoA_kbaZ, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        text = element_text(size = 8)) +  
+  labs(title = "gatZ-kbaZ", x = "", y = "Fold Change")+
+  scale_fill_brewer(palette="Paired")+
+  stat_compare_means(data=rpoA_kbaZ,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=F,size= 3,comparisons = my_comparisons)+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+
+
+######nagA##########
+rpoA_nagA <- subset(rpoA, rpoA$Gene %in% "nagA")
+SE_nagA <- summarySE(rpoA_nagA , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+
+SE_nagA$comparison <- factor(SE_nagA$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_nagA$Medium <- factor(SE_nagA$Medium, levels= c("Glucose","GalNAc"))
+
+p_nagA <- ggplot(SE_nagA, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_nagA,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  geom_jitter(data=rpoA_nagA, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        text = element_text(size = 8)) +  
+  labs(title = "nagA", x = "", y = "Fold Change")+
+  scale_fill_brewer(palette="Paired")+
+  stat_compare_means(data=rpoA_nagA,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=F,size= 3,comparisons = my_comparisons)+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+
+#p4
+
+#####  agaS  ######
+rpoA_agaS <- subset(rpoA, rpoA$Gene %in% "agaS")
+SE_agaS <- summarySE(rpoA_agaS , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+
+SE_agaS$comparison <- factor(SE_agaS$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_agaS$Medium <- factor(SE_agaS$Medium, levels= c("Glucose","GalNAc"))
+
+p_agaS <- ggplot(SE_agaS, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_agaS,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  geom_jitter(data=rpoA_agaS, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        text = element_text(size = 8)) +  
+  labs(title = "agaS", x = "", y = "Fold Change")+
+  scale_fill_brewer(palette="Paired")+
+  stat_compare_means(data=rpoA_agaS,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+
+
+#######gagF########
+
+rpoA_agaF <- subset(rpoA, rpoA$Gene %in% "agaF")
+SE_agaF <- summarySE(rpoA_agaF , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+
+SE_agaF$comparison <- factor(SE_agaF$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_agaF$Medium <- factor(SE_agaF$Medium, levels= c("Glucose","GalNAc"))
+
+p_agaF <- ggplot(SE_agaF, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_agaF,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  geom_jitter(data=rpoA_agaF, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        text = element_text(size = 8)) +  
+  labs(title = "agaF", x = "", y = "Fold Change")+
+  scale_fill_brewer(palette="Paired")+
+  stat_compare_means(data=rpoA_agaF,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+
+
+#########kbaY
+
+rpoA_kbaY <- subset(rpoA, rpoA$Gene %in% "kbaY")
+SE_kbaY <- summarySE(rpoA_kbaY , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+
+SE_kbaY$comparison <- factor(SE_kbaY$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_kbaY$Medium <- factor(SE_kbaY$Medium, levels= c("Glucose","GalNAc"))
+
+p_kbaY <- ggplot(SE_kbaY, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_kbaY,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  geom_jitter(data=rpoA_kbaY, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        text = element_text(size = 8)) +  
+  labs(title = "gatY-kbaY", x = "", y = "Fold Change")+
+  scale_fill_brewer(palette="Paired")+
+  stat_compare_means(data=rpoA_kbaY,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+
+##########rhaR
+rpoA_rhaR <- subset(rpoA, rpoA$Gene %in% "rhaR")
+SE_rhaR <- summarySE(rpoA_rhaR , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+
+SE_rhaR$comparison <- factor(SE_rhaR$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_rhaR$Medium <- factor(SE_rhaR$Medium, levels= c("Glucose","GalNAc"))
+
+p_rhaR <- ggplot(SE_rhaR, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_rhaR,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  geom_jitter(data=rpoA_rhaR, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        text = element_text(size = 8)) +  
+  labs(title = "rhaR", x = "", y = "Fold Change")+
+  scale_fill_brewer(palette="Paired")+
+  stat_compare_means(data=rpoA_rhaR,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+
+
+#######agaV
+
+rpoA_agaV <- subset(rpoA, rpoA$Gene %in% "agaV")
+SE_agaV <- summarySE(rpoA_agaV , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+
+SE_agaV$comparison <- factor(SE_agaV$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_agaV$Medium <- factor(SE_agaV$Medium, levels= c("Glucose","GalNAc"))
+
+p_agaV <- ggplot(SE_agaV, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_agaV,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  geom_jitter(data=rpoA_agaV, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        text = element_text(size = 8)) +  
+  labs(title = "agaV", x = "", y = "Fold Change")+
+  scale_fill_brewer(palette="Paired")+
+  stat_compare_means(data=rpoA_agaV,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=F,size= 3,comparisons = my_comparisons)+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+
+#######agaC
+
+rpoA_agaC <- subset(rpoA, rpoA$Gene %in% "agaC")
+SE_agaC <- summarySE(rpoA_agaC , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+
+SE_agaC$comparison <- factor(SE_agaC$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_agaC$Medium <- factor(SE_agaC$Medium, levels= c("Glucose","GalNAc"))
+
+p_agaC <- ggplot(SE_agaC, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_agaC,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  geom_jitter(data=rpoA_agaC, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        text = element_text(size = 8)) +  
+  labs(title = "agaC", x = "", y = "Fold Change")+
+  scale_fill_brewer(palette="Paired")+
+  stat_compare_means(data=rpoA_agaC,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+
+
+#########agaD
+rpoA_agaD <- subset(rpoA, rpoA$Gene %in% "agaD")
+SE_agaD <- summarySE(rpoA_agaD , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+
+SE_agaD$comparison <- factor(SE_agaD$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_agaD$Medium <- factor(SE_agaD$Medium, levels= c("Glucose","GalNAc"))
+
+p_agaD <- ggplot(SE_agaD, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_agaD,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  geom_jitter(data=rpoA_agaD, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        text = element_text(size = 8)) +  
+  labs(title = "agaD", x = "", y = "Fold Change")+
+  scale_fill_brewer(palette="Paired")+
+  stat_compare_means(data=rpoA_agaD,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+
+
+##########immR
+
+rpoA_immR <- subset(rpoA, rpoA$Gene %in% "immR")
+SE_immR <- summarySE(rpoA_immR , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
+
+SE_immR$comparison <- factor(SE_immR$comparison, levels= c("HTF-495Glucose","HTF-495GalNAc","ATCC27768Glucose","ATCC27768GalNAc"))
+SE_immR$Medium <- factor(SE_immR$Medium, levels= c("Glucose","GalNAc"))
+
+p_immR <- ggplot(SE_immR, aes(x=comparison, y=Relative.expression.to.glucose..corrected.for.rpoA., fill=Medium)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(data=SE_immR,aes(ymin=Relative.expression.to.glucose..corrected.for.rpoA.-se, ymax=Relative.expression.to.glucose..corrected.for.rpoA.+se), width=.2,
+                position=position_dodge(.9))+
+  geom_jitter(data=rpoA_immR, position=position_dodge(.9),size=0.6)+
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.grid =element_blank(),
+        axis.line = element_line(size=1, colour = "black"),
+        legend.position = "none",
+        text = element_text(size = 8)) +  
+  labs(title = "immR", x = "", y = "Fold Change")+
+  scale_fill_brewer(palette="Paired")+
+  stat_compare_means(data=rpoA_immR,label ="p.signif",
+                     method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
+  scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
+#p12
+
+if(!dir.exists("07.Experiment")){dir.create("07.Experiment")}
+ggsave("07.Experiment/qPCR_genes_p.pdf",
+       grid.arrange (p_agaF, p_agaV, p_agaC, p_agaD, 
+                     p_nagA, p_agaS, p_lacC, p_kbaY,
+                     p_ptsH, p_rhaR, p_immR, p_kbaZ, ncol=4),
+       width=8, height=7)
+```
+

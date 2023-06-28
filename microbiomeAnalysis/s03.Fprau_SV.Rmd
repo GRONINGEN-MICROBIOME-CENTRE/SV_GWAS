@@ -1,0 +1,139 @@
+---
+title: "Fprau SV analysis"
+author: "Daoming Wang"
+date: "2023/04/26"
+output:
+  html_document: 
+    theme: flatly
+    highlight: espresso
+    toc: true
+    toc_depth: 4
+    toc_float: true
+  word_document: default
+  pdf_document:
+    includes:
+      in_header: header.tex
+      keep_tex: yes
+      latex_engine: xelatex
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1 Preparation
+
+### 1.1 Import
+
+```{r 1.1, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+suppressMessages(source("functions.R"))
+```
+
+### 1.2 Inputs
+
+```{r 1.2, echo=TRUE}
+load("01.cleanData/popStruc/msv_dist.fp.dag3.RData")
+load("01.cleanData/assoc_SV/dsgv_full_abo.RData")
+load("01.cleanData/assoc_SV/vsgv_full_abo.RData")
+```
+
+## 2 Association between ABO-related SVs of Fp
+
+```{r 2}
+sgv_full_abo<-cbind(dsgv_full_abo, vsgv_full_abo)
+
+## Between SV correlation
+sgv_full_abo.input<-sgv_full_abo
+colnames(sgv_full_abo.input) <-colnames(sgv_full_abo.input) %>% str_replace_all(".*\\:", "")
+F.prau_sv_corr<-rcorr(as.matrix(sgv_full_abo.input),type=c("spearman"))
+
+abo_sv<-apply(sgv_full_abo, 2, function(x){as.numeric(x)} )
+rownames(abo_sv)<-rownames(sgv_full_abo)
+F.prau_sv_corr.p<- cor.mtest(abo_sv, conf.level = 0.95, method = "spearman")
+
+library(reshape2)
+F.prau_sv_corr.df<-data.frame(melt(F.prau_sv_corr$r),
+                              P = melt(F.prau_sv_corr.p$p)[,3])
+
+if (!dir.exists("03.Fprau_SV")) {dir.create("03.Fprau_SV")}
+write.table(F.prau_sv_corr.df, "03.Fprau_SV/ABO_F.prau_sv_cor.tsv",
+            sep = "\t", col.names = T, row.names = F, quote = F)
+
+library(corrplot)
+if (!dir.exists("03.Fprau_SV")) {dir.create("03.Fprau_SV")}
+pdf("03.Fprau_SV/Between_Fp_abo_SVs.heatmap.pdf",width = 8, height = 8)
+corrplot(F.prau_sv_corr$r, p.mat = F.prau_sv_corr.p$p, sig.level = 0.05, type = "upper", order = "hclust", addrect = 2,
+         tl.col = "black", tl.srt = 45, tl.cex = 1.5,cl.cex = 1,
+         addCoef.col ='black', number.cex = 1.5)
+dev.off()
+```
+
+
+## 3 Populational genetic structure of Fprau
+
+```{r 3}
+sgv_full_abo<-cbind(dsgv_full_abo, vsgv_full_abo)
+
+#msv_dist.fp.mds <- ape::pcoa(msv_dist.fp.dag3,correction="cailliez")
+#save(msv_dist.fp.mds, file = "03.Fprau_SV/msv_dist.fp.mds.RData")
+load("03.Fprau_SV/msv_dist.fp.mds.RData")
+all_msv_pcoa.fp <- data.frame(msv_dist.fp.mds$vectors)
+write.table(all_msv_pcoa.fp[,1:5], "03.Fprau_SV/dag3_msv_pcoa.fp.5pc.tsv", sep = "\t", row.names = T, col.names = NA)
+
+sgv_full_abo.inter<-sgv_full_abo[match(rownames(all_msv_pcoa.fp),
+                                         rownames(sgv_full_abo)),]
+## correlation
+abo_F.prau_sv_pc<-matrix(NA, ncol = 4, nrow = ncol(sgv_full_abo.inter)*5)
+for (i in 1:ncol(sgv_full_abo.inter)) {
+  for (j in 1:5) {
+#    i<-1
+#    j<-1
+    cor_res<-cor.test(sgv_full_abo.inter[,i], all_msv_pcoa.fp[,j],method = "spearman")
+    abo_F.prau_sv_pc[(i-1)*5+j,]<-c(colnames(sgv_full_abo.inter)[i], colnames(all_msv_pcoa.fp)[j],
+                                                             cor_res$estimate, cor_res$p.value)
+  }
+}
+abo_F.prau_sv_pc<-as.data.frame(abo_F.prau_sv_pc)
+colnames(abo_F.prau_sv_pc)<-c("SV", "PC", "R", "P")
+abo_F.prau_sv_pc$R<-as.numeric(abo_F.prau_sv_pc$R)
+abo_F.prau_sv_pc$P<-as.numeric(abo_F.prau_sv_pc$P)
+
+if(!dir.exists("03.Fprau_SV/")){dir.create("03.Fprau_SV/")}
+write.table(abo_F.prau_sv_pc, "03.Fprau_SV/abo_F.prau_sv_pc.tsv", sep = "\t",col.names = T, row.names = F, quote = F)
+
+## Visualization
+if(!dir.exists("03.Fprau_SV/")){dir.create("03.Fprau_SV/")}
+pdf("03.Fprau_SV/p_sv_fp_pcoa.pdf",width = 5, height = 5)
+for(i in 1:ncol(sgv_full_abo.inter)){
+#  i<-1
+  p_F.prau_pcoa<-ggplot(all_msv_pcoa.fp,aes(Axis.1,Axis.2, color = sgv_full_abo.inter[,i]))+
+    geom_point(size = 2,alpha = 0.5)+
+    xlab(paste("PCo1=",round(100*msv_dist.fp.mds$values$Rel_corr_eig[1],digits = 2),"%",sep = ""))+
+    ylab(paste("PCo2=",round(100*msv_dist.fp.mds$values$Rel_corr_eig[2],digits = 2),"%",sep = ""))+
+    ggtitle(colnames(sgv_full_abo.inter)[i])+
+    scale_color_distiller(palette = "Spectral")+
+    theme(plot.subtitle = element_text(vjust = 1), 
+          plot.caption = element_text(vjust = 1), 
+          axis.line.x =  element_line(),
+          axis.line.y = element_line(),
+          legend.position = 'right',
+          legend.title = element_blank(),
+          legend.key = element_rect(fill = NA), 
+          panel.grid.major = element_line(colour = NA),
+          panel.grid.minor = element_line(colour = NA),
+          panel.background = element_rect(fill = NA))
+  
+  print(p_F.prau_pcoa)
+  
+}
+dev.off()
+```
+
+## 4 Clustering analysis
+
+```{r 4}
+#clust.fp.dag3<- my_cluster(msv_dist.fp.dag3, ps.cutoff = 0.55)
+#save(clust.fp.dag3, file = "03.Fprau_SV/clust.fp.dag3.RData")
+load("03.Fprau_SV/clust.fp.dag3.RData")
+```
