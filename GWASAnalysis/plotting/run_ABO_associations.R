@@ -62,7 +62,6 @@ fit_lmm <- function(dat, abo_group, svtype){
   return (coeff[abo_group,])
 }
 
-
 make_plots <- function(m, svtype, sv_name){
   m$ABO_A_FUT2 <- interaction(m$FUT2_status, m$ABO_A)
   m$ABO_A_FUT2 <- factor(m$ABO_A_FUT2, levels = c("secretor.A", "secretor.O/B", "non-secretor.A", "non-secretor.O/B"))
