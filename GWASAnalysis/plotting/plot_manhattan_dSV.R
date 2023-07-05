@@ -2,11 +2,12 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 
-d <- read.delim("/data/umcg-tifn/SV/SV_GWAS/plots/dSVs_for_manhattan.txt", header = F, as.is = T, sep = "\t", check.names = F)
+setwd('/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/plots')
+d <- read.delim("dSVs_for_manhattan.txt", header = T, as.is = T, sep = "\t", check.names = F)
 colnames(d) <- c("bac","SNP", "CHR", "BP", "P")
 d$BP <- as.numeric(d$BP)
 
-snps_to_highlight <- read.delim("/data/umcg-tifn/SV/SV_GWAS/plots/dSV_snps2highlight.repl.txt", header = F, as.is = T, sep = "\t", check.names = F)[,1]
+snps_to_highlight <- read.delim("dSV.snps_to_highlight.txt", header = F, as.is = T, sep = "\t", check.names = F)[,1]
 
 don <- d %>% 
   
@@ -32,16 +33,16 @@ don <- d %>%
 axisdf <- don %>% group_by(CHR) %>% summarize(center=( max(BPcum) + min(BPcum) ) / 2 )
 
 
-png("/data/umcg-tifn/SV/SV_GWAS/plots/dSV_manhattan_noannot.v10.png", type = "cairo", width = 15, height = 5, units = 'in', res = 400)
+png("dSV_manhattan_noannot.png", type = "cairo", width = 15, height = 5, units = 'in', res = 400)
 ggplot(don, aes(x=BPcum, y=-log10(P))) +
   # Show all points
   geom_point( aes(color=as.factor(CHR)),  size=1) +
   scale_color_manual(values = rep(c("#495DA0", "#74AFDF"), 22 )) +
-  geom_hline(yintercept=8.302771, color = "#EF3B2C") +
+  geom_hline(yintercept=10.52288, color = "#EF3B2C", linewidth = 0.3) +
   # custom X axis:
   xlab("Chromosome") +
   scale_x_continuous( label = axisdf$CHR, breaks= axisdf$center ) +
-  scale_y_continuous(expand = c(0, 0) , limits = c(0,45)) +
+  scale_y_continuous(expand = c(0, 0) , limits = c(0,46)) +
   
   # Add highlighted points
   geom_point(data=subset(don, is_highlight=="yes"), color="orange", size=1) +
