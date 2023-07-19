@@ -11,6 +11,10 @@
 #SBATCH --get-user-env=L
 #SBATCH --tmp=50gb
 
+#
+# combine full summary stats of individual SVs into files per species  
+#
+
 sp=$1
 svtype=$2
 echo "SV type=${svtype}, species=$sp"
