@@ -2,7 +2,7 @@ args <- commandArgs(trailingOnly = TRUE)
 library(ieugwasr)
 
 res_path <- args[1]
-d <- read.delim(res_path, header = T,  sep = "\t", as.is = T, check.names = F)
+d <- read.delim(res_path, header = T,  sep = "\t", as.is = T, check.names = F, row.names = NULL)
 
 res2 <- data.frame()
 
