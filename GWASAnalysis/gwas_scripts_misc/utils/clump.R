@@ -1,8 +1,6 @@
 args <- commandArgs(trailingOnly = TRUE)
 library(ieugwasr)
 
-setwd("/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2") # to get the access token
-
 res_path <- args[1]
 d <- read.delim(res_path, header = T,  sep = "\t", as.is = T, check.names = F)
 

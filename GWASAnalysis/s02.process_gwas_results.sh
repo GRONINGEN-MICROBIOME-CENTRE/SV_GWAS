@@ -40,11 +40,12 @@ awk 'BEGIN {FS=OFS="\t"}; {if (NR == 1 || ($10 > 0.05 && $17 == 1)) print }' ${s
 #
 # 4. Clump
 #
+cp /groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/ ./
 Rscript ${script_dir}/utils/clump.R ${svtype}.fastGWA.5e-08.rsids.flt.txt
 
 
 #
-# 5. AnnotATE
+# 5. Annotate
 #
 f=${svtype}.fastGWA.5e-08.rsids.flt.txt.clumped_0.1.txt
 
