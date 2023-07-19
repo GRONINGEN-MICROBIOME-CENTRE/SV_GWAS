@@ -40,7 +40,7 @@ awk 'BEGIN {FS=OFS="\t"}; {if (NR == 1 || ($10 > 0.05 && $17 == 1)) print }' ${s
 #
 # 4. Clump
 #
-cp /groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/ ./
+cp -r /groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/ieugwasr_oauth ./
 Rscript ${script_dir}/utils/clump.R ${svtype}.fastGWA.5e-08.rsids.flt.txt
 
 
