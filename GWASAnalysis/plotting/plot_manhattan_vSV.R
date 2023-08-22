@@ -62,5 +62,6 @@ ggplot(don, aes(x=BPcum, y=log10(P))) +
     axis.line.y = element_line(color="lightgrey", size = 0.5),
     axis.ticks.x = element_blank(),
     axis.text.x =  element_blank(), 
+    axis.text.y = element_text(size = 12)
   )
 dev.off()

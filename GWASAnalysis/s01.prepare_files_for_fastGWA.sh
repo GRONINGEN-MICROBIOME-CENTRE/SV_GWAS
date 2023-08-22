@@ -4,7 +4,7 @@
 # Format and filter the SV tables, prepare all necessary files and scripts, submit GWAS jobs
 #
 
-d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/
+d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/
 script_dir=${d}/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/
 genotype_dir=${d}/genotypes/
 
@@ -47,10 +47,23 @@ do
     
     # 2.2 scale read counts
     Rscript ${script_dir}/utils/scale_read_count.R  ${cohort}.covariates.txt ${cohort}.covariates.scaled.txt
+    mv ${cohort}.covariates.scaled.txt ${cohort}.covariates.txt
     
     # make the covariate file without header for fastGWA
-    mv ${cohort}.covariates.scaled.txt ${cohort}.covariates.txt
-    tail -n+2 ${cohort}.covariates.txt > ${cohort}.covariates.noheader.txt
+    #tail -n+2 ${cohort}.covariates.txt > ${cohort}.covariates.noheader.txt
+
+    cohorts=(LLD DAG3 300OB 500FG)
+    
+    # CLR transform the abundances
+    mkdir tmp
+    cut -f2-111 ${c}.covariates.txt > tmp/tmp.${c}.covariates.txt
+    Rscript clr_transform.R tmp/tmp.${c}.covariates.txt tmp/tmp.${c}.covariates.clr.txt
+
+    cut -f1 ${c}.covariates.txt | \
+        paste - tmp/tmp.${c}.covariates.clr.txt <(cut -f112- ${c}.covariates.txt) | 
+        sed "s:FID\t\t:FID\tIID\t:1" \
+        > ${c}.covariates.txt
+    tail -n+2 ${c}.covariates.txt > ${c}.covariates.noheader.txt
 
   
 done
@@ -151,7 +164,7 @@ done < all_bacs.${svtype}.txt
 # 6. Check the GWAS results files
 #
 
-result_dir="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/results_fastGWA/${svtype}/meta/"
+result_dir="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/results_fastGWA/${svtype}/meta/"
 while read line
 do
     sv=$line

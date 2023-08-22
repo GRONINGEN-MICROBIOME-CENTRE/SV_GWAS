@@ -4,7 +4,7 @@ library(lme4qtl, lib.loc="/groups/umcg-lld/tmp01/other-users/umcg-dzhernakova/R/
 library(lme4)
 library(ggplot2)
 library(patchwork)
-
+library('ggpubr')
 
 fut2_snp <- "19:49206674"
 recode_genotypes <- function(geno, a1, a2){
@@ -38,10 +38,18 @@ format_abo_bloodgroup <- function(abo){
   abo$ABO_blood_group <- abo$Bloodtype
   return(abo)
 }
-
+changeSciNot <- function(n) {
+  output <- format(n, scientific = TRUE) #Transforms the number into scientific notation even if small
+  output <- sub("e", "x10", output) #Replace e with 10^
+  output <- sub("\\+0?", "", output) #Remove + symbol and leading zeros on expoent, if > 1
+  output <- sub("-0?", "-", output) #Leaves - symbol but removes leading zeros on expoent, if < 1
+  output
+}
 
 fit_lmm <- function(dat, abo_group, svtype){
   covars = paste0(abo_group, " + age + read_number + sex + abundance + (1 | ID)")
+  dat$age <- scale(dat$age)
+  dat$abundance <- scale(dat$abundance)
   if (svtype == "vSV"){
     lmm <- relmatLmer(as.formula(paste0("sv ~ ", covars)), data = dat, relmat = list(ID = kinMat), control = lmerControl(optimizer = "bobyqa"))
     fixedEffectsPv <- car::Anova(lmm)
@@ -55,16 +63,26 @@ fit_lmm <- function(dat, abo_group, svtype){
     coeff$N <- nobs(lmm)
     
   } else if (svtype == "dSV"){
-    lmm <- relmatGlmer(as.formula(paste0("sv ~ ", covars)), data = dat, relmat = list(ID = kinMat), family = binomial, control = glmerControl(optimizer = "bobyqa"))
+    lmm <- relmatGlmer(as.formula(paste0("sv ~ ", covars)), data = dat, relmat = list(ID = kinMat), family = binomial, control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
     coeff <- as.data.frame(summary(lmm)$coefficients[,c(1,2,4)])
+    #if (coeff[2,3] == 0){
+    #  lmm <- relmatGlmer(as.formula(paste0("sv ~ ", covars)), data = dat, relmat = list(ID = kinMat), family = binomial)
+    #  coeff <- as.data.frame(summary(lmm)$coefficients[,c(1,2,4)])
+    #}
     coeff$N <- nobs(lmm)
   }
   return (coeff[abo_group,])
 }
 
-make_plots <- function(m, svtype, sv_name){
+make_plots <- function(m, svtype, sv_name, p_sec, p_non){
   m$ABO_A_FUT2 <- interaction(m$FUT2_status, m$ABO_A)
   m$ABO_A_FUT2 <- factor(m$ABO_A_FUT2, levels = c("secretor.A", "secretor.O/B", "non-secretor.A", "non-secretor.O/B"))
+  
+  pvals <- data.frame(matrix(nrow = 2, ncol = 3))
+  colnames(pvals) <- c("group1", "group2", "p")
+  pvals[1,] <- c("secretor.A/AB", "secretor.B/O", changeSciNot(formatC(p_sec, digits = 3)))
+  pvals[2,] <- c("non-secretor.A/AB", "non-secretor.B/O", changeSciNot(formatC(p_non, digits = 3)))
+  
   
   if (svtype == "vSV"){
     #colors = c("#1D91C0", "#EC7014")
@@ -75,7 +93,8 @@ make_plots <- function(m, svtype, sv_name){
       geom_boxplot(width=0.5) +
       labs(x = "", y = paste0(svtype, " abundance")) +
       theme_classic() + theme(legend.position = "none") +
-      scale_color_manual(values = colors) + scale_x_discrete(labels = c("A/AB\nFUT2 secretors", "B/O", "A/AB\nFUT2 non-secretors", "B/O"))
+      scale_color_manual(values = colors) + 
+      scale_x_discrete(labels = c("A/AB\nFUT2 secretors", "B/O", "A/AB\nFUT2 non-secretors", "B/O"))
     
   } else if (svtype == "dSV"){
     colors = c("white", "#B3B4B6", "#225EA8")
@@ -88,7 +107,7 @@ make_plots <- function(m, svtype, sv_name){
       scale_fill_manual(sv, values = c(colors[1], colors[2], colors[1], colors[3])) +
       theme_classic() + labs(x = "", y = paste0("fraction of samples with ", svtype)) +
       theme(legend.position = "none") +
-      scale_x_discrete(labels=c("A/AB\nFUT2 secretors", "B/O", "A/AB\nFUT2 non-secretors", "B/O"))
+      scale_x_discrete(labels=c("A/AB\nFUT2 secretors", "B/O", "A/AB\nFUT2 non-secretors", "B/O")) 
     
   }
   return(p)
@@ -96,7 +115,7 @@ make_plots <- function(m, svtype, sv_name){
 
 sv <- "F.prausnitzii:102"
 svtype <- "dSV"
-d <- "/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/"
+d <- "/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/"
 setwd(paste0(d, "/plots/"))
 
 svs <- read.delim("svs_to_plot.txt", sep = "\t", as.is = T)
@@ -131,7 +150,7 @@ for (sv_num in 1:nrow(svs)){
     m <- na.omit(m)
     m$sex <- as.factor(m$sex)
     m$ID <- row.names(m)
-    m$age <- scale(m$age)
+    #m$age <- scale(m$age)
     #m$abundance <- scale(m$abundance)
     
     kinMat <- readRDS(paste0(d, "/genotypes/", c, "/with_relatives/GCTA/GRM_", c, ".text.grm.ibd_matrix.RDS"))*2
@@ -150,7 +169,7 @@ for (sv_num in 1:nrow(svs)){
     res[6,] <- c("ABO_O_nonsecretors", "O", "A/AB/B", fit_lmm(non, "ABO_O", svtype))
     write.table(res, paste0("assoc/", c, ".", sv, "-ABO_association.txt"), sep = "\t", quote = F, row.names = F)
     
-    plots[[cnt]] <- make_plots(m, svtype, coord)
+    plots[[cnt]] <- make_plots(m, svtype, coord, res[2,6], res[3,6])
     cnt <- cnt + 1
   }
 }

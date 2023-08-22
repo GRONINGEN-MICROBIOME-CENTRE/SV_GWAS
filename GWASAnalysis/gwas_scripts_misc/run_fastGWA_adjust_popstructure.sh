@@ -1,6 +1,6 @@
-d="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/"
+d="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/"
 script_dir="${d}/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/"
-gcta=${d}/tools/gcta-1.94.1-linux-kernel-3-x86_64/gcta-1.94.1
+gcta=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/tools/gcta-1.94.1-linux-kernel-3-x86_64/gcta-1.94.1
 pheno_dir=${d}/data_fastGWA/
 cohort="DAG3"
 

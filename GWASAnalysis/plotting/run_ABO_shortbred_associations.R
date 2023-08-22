@@ -44,7 +44,7 @@ format_abo_bloodgroup <- function(abo){
 
 
 rename_genes <- function(pheno){
-  id_conv <- read.delim("/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/results/shortbred/id_convertion.txt", header = T, sep = "\t", as.is = T, check.names = F, row.names = 1)
+  id_conv <- read.delim("/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/shortbred_id_convertion.txt", header = T, sep = "\t", as.is = T, check.names = F, row.names = 1)
   colnames(pheno) <- id_conv[colnames(pheno),"new_id"]
   return(pheno)
 }
@@ -155,7 +155,7 @@ changeSciNot <- function(n) {
   output
 }
 
-d <- "/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/"
+d <- "/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/"
 c <- "DAG3"
 
 pheno <- as.data.frame(t(read.delim(paste0(d, "/data_fastGWA/shortbred_final.res"), header = T, sep = "\t", as.is = T, check.names = F, row.names = 1)))

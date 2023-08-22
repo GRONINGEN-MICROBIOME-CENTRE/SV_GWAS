@@ -11,7 +11,7 @@
 #SBATCH --get-user-env=L
 
 svtype=dSV
-d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/results_fastGWA/${svtype}/meta_combined/
+d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/results_fastGWA/${svtype}/meta_combined/
 
 zcat ${d}/summary_stats/A.hadrus.${svtype}.fastGWA.meta-analysis.annot.txt.gz | head -1 > ${d}/all_species.${svtype}.fastGWA.meta-analysis.p0.05.txt
 
@@ -25,7 +25,7 @@ done
 bzip2 -9 ${d}/all_species.${svtype}.fastGWA.meta-analysis.p0.05.txt
 
 svtype=vSV
-d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/results_fastGWA/${svtype}/meta_combined/
+d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/results_fastGWA/${svtype}/meta_combined/
 
 zcat ${d}/summary_stats/A.hadrus.${svtype}.fastGWA.meta-analysis.annot.txt.gz | head -1 > ${d}/all_species.${svtype}.fastGWA.meta-analysis.p0.05.txt
 

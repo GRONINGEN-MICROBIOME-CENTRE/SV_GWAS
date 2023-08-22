@@ -2,7 +2,7 @@
 import pandas as pd
 
 cohorts = ["LLD", "500FG", "DAG3"]
-base_path = "/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/"
+base_path = "/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/"
 
 for c in cohorts:
     fname = base_path + "genotypes/" + c + "/with_relatives/text_genotypes/" + c + ".abo.genotypes.txt"

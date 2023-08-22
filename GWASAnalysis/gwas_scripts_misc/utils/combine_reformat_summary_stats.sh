@@ -18,10 +18,10 @@
 sp=$1
 svtype=$2
 echo "SV type=${svtype}, species=$sp"
-d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/results_fastGWA/
-script_dir=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/utils/
+d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/results_fastGWA/
+script_dir=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/utils/
 # merge sorted files
-meta_comb_dir=${d}/${svtype}/meta_combined/${sp}/
+meta_comb_dir=${d}/${svtype}/meta_combined/
 
 mkdir -p ${meta_comb_dir}
 
@@ -36,7 +36,7 @@ cut -f1-8,12- \
 gzip -c ${TMPDIR}/${sp}.${svtype}.fastGWA.meta-analysis.txt > ${meta_comb_dir}/${sp}.${svtype}.fastGWA.meta-analysis.txt.gz
 gzip  ${d}/${svtype}/meta/${sp}\:*/*meta_res.annot.tbl
 
-python3 ${script_dir}/reformat_summary_stats.py $sp ${svtype} /groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/
+python3 ${script_dir}/reformat_summary_stats.py $sp ${svtype} /groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/
 
 rm ${meta_comb_dir}/${sp}.${svtype}.fastGWA.meta-analysis.txt.gz
 gzip ${meta_comb_dir}/${sp}.${svtype}.fastGWA.meta-analysis.annot.txt
