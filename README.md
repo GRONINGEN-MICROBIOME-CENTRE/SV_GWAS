@@ -1,8 +1,9 @@
 # Paper
 
-Title: Host Genetic Regulation of Human Gut Microbial Structural Variation
-Journal: Nature
-Year: 2023
+- Title: Host Genetic Regulation of Human Gut Microbial Structural Variation
+
+- Journal: Nature
+- Year: 2023
 
 # Summary
 
@@ -43,5 +44,7 @@ Here we describe the general workflow, for details please see the comments and d
 
 **gwas_scripts_misc/ **: this folder contains helper scripts used in s01 and s02 heritability/ : this folder contains helper scripts used in heritability estimation plotting/ : this folder contains scripts used for making plots (manhattan, SV per ABO blood group barplots, etc)
 
-NOTE: Most scripts point to paths on our cluster, so if you want to replicate any of the scripts and need input file format descriptions, please contact us.
+
+
+> NOTE: Most scripts point to paths on our cluster, so if you want to replicate any of the scripts and need input file format descriptions, please contact us.
 
