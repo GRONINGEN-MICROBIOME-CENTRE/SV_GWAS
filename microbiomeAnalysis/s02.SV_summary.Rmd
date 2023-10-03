@@ -127,7 +127,7 @@ p_sv_abun_density <- ggplot(abun_all,aes(x=Abundance,color = Cohort, fill = Coho
         panel.background = element_rect(fill = NA))
 
 if(!dir.exists("02.SV_summary")){dir.create("02.SV_summary")}
-pdf("02.SV_summary/sv_abun_density.pdf", width = 6, height = 3)
+pdf("02.SV_summary/sv_abun_density.pdf", width = 6, height = 3) # Extended Data Fig. 1D
 print(p_sv_abun_density)
 dev.off()
 ```
@@ -146,7 +146,7 @@ sv_n<-data.frame(items = rep("SVs number", 2),
                       value = c(dsgv_n, vsgv_n))
 p_pie<-my_pie(sv_n, 'SVs number',mycol = rev(mycolor2_green_blue))
 
-pdf("02.SV_summary/SV_full_Total_SVs_number.pdf",height = 6, width = 6)
+pdf("02.SV_summary/SV_full_Total_SVs_number.pdf",height = 6, width = 6) # Extended Data Fig. 1B
 print(p_pie)
 dev.off()
 ```
@@ -182,7 +182,7 @@ p_sv_species<-ggplot(species_sgv_n_long, aes(x=Short_name, y=number, group = typ
         panel.grid.minor = element_line(colour = NA), 
         panel.background = element_rect(fill = NA))
 
-pdf("02.SV_summary/SV_full_SVs_number_species.pdf", height = 6, width = 20)
+pdf("02.SV_summary/SV_full_SVs_number_species.pdf", height = 6, width = 20) # Extended Data Fig. 1A
 print(p_sv_species)
 dev.off()
 ```
@@ -221,7 +221,7 @@ p_sample_n<-ggplot(infor_sample_n.long, aes(x=Short_name, y=Sample_size,group = 
         panel.background = element_rect(fill = NA))
 
 
-pdf("02.SV_summary/SV_full_Samples_number_species.pdf", height = 9, width = 20) 
+pdf("02.SV_summary/SV_full_Samples_number_species.pdf", height = 9, width = 20) # Extended Data Fig. 1C
 print(p_sample_n)
 dev.off()
 ```
@@ -289,7 +289,7 @@ sv_n<-data.frame(items = rep("SVs number", 2),
                       value = c(dsgv_n, vsgv_n))
 p_pie<-my_pie(sv_n, 'SVs number',mycol = mycolor2_green_blue)
 
-pdf("02.SV_summary/SV_filtered_Total_SVs_number.pdf",height = 6, width = 6)
+pdf("02.SV_summary/SV_filtered_Total_SVs_number.pdf",height = 6, width = 6) # Main Fig. 1C
 print(p_pie)
 dev.off()
 ```
@@ -324,7 +324,7 @@ p_sv_species<-ggplot(species_sgv_n_long, aes(x=Short_name, y=number, group = typ
         panel.grid.minor = element_line(colour = NA), 
         panel.background = element_rect(fill = NA))
 
-pdf("02.SV_summary/SV_filtered_SVs_number_species.pdf", height = 4.5, width = 10)
+pdf("02.SV_summary/SV_filtered_SVs_number_species.pdf", height = 4.5, width = 10) # Main Fig. 1B
 print(p_sv_species)
 dev.off()
 ```

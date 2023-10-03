@@ -1,6 +1,6 @@
 ---
 title: "Experiment"
-author: "Daoming Wang, Lei Liu"
+author: "Lei Liu, Daoming Wang"
 date: "2023/6/13"
 output:
   html_document: 
@@ -65,7 +65,7 @@ f <- ggplot(SE_383_GalNAc, aes(x=Time, y=OD600, color="red"))+
   scale_x_continuous(breaks=seq(0, 40, 4))+
   scale_y_continuous(limits = c(0.08,0.8),breaks=seq(0.0,1, 0.2))
 
-ggsave("07.Experiment/HTF-383.pdf", width =4, height = 4)
+ggsave("07.Experiment/HTF-383.pdf", width =4, height = 4) # Extended Data Fig. 6A
 
 ########### GalNAc #########
 SE1 <- subset(SE,SE$Time %in% c("0","4","6","8","10","12","14","16","18","20","22","24") )
@@ -86,7 +86,7 @@ f2 <- ggplot(SE3, aes(x=Time, y=OD600, group =Strains,color = Strain))+
   scale_x_continuous( limits=c(0,28),breaks=seq(0, 26, 4))+
   scale_y_continuous(limits = c(0.08,1.1),breaks=seq(0.0,1.1, 0.1))
 
-ggsave("07.Experiment/GalNAc.pdf", width=4, height=4)
+ggsave("07.Experiment/GalNAc.pdf", width=4, height=4) # Main Fig. 3D
 
 ################ Gal #######
 
@@ -107,7 +107,7 @@ f3 <- ggplot(SE4, aes(x=Time, y=OD600, group =Strains, color= Strain))+
   scale_x_continuous(limits=c(0,28),breaks=seq(0, 26, 4))+
   scale_y_continuous(limits = c(0.08,1.1),breaks=seq(0.0,1.2, 0.1))
 
-ggsave("07.Experiment/Gal.pdf", width=4, height=4)
+ggsave("07.Experiment/Gal.pdf", width=4, height=4) # Main Fig. 3E
 ```
 
 ## 3 qPCR
@@ -426,6 +426,7 @@ p_immR <- ggplot(SE_immR, aes(x=comparison, y=Relative.expression.to.glucose..co
 #p12
 
 if(!dir.exists("07.Experiment")){dir.create("07.Experiment")}
+# Extended Data Fig. 7
 ggsave("07.Experiment/qPCR_genes_p.pdf",
        grid.arrange (p_agaF, p_agaV, p_agaC, p_agaD, 
                      p_nagA, p_agaS, p_lacC, p_kbaY,

@@ -88,6 +88,7 @@ p_tree <- ggtree(groupOTU(tree,group), branch.length='none') +
         panel.spacing=unit(0, 'cm'),
         legend.position="right")
 
+# Main Fig. 3C
 ggsave("04.GalNAc_SV/snpPhyTree_synteny.pdf",
        p_tree +p_genes+ plot_layout(widths = c(3,4)),
        width=12, height=4.5)
@@ -112,7 +113,7 @@ dd <- bind_rows(d1, d2) %>%
 ## reverse x-axis and 
 ## set offset to make the tree on the right-hand side of the first tree
 
-pdf("04.GalNAc_SV/compare_tree.pdf", width = 6, height = 4)
+pdf("04.GalNAc_SV/compare_tree.pdf", width = 6, height = 4) # Supplementary Note 6A
 p1 + geom_tree(data=d2, layout='roundrect')+
   geom_line(aes(x, y, group=label), data=dd %>% dplyr::filter(isTip==TRUE), color='grey')+
   geom_tiplab(geom = 'text', colour = "blue") +
@@ -135,7 +136,7 @@ dist.df <- data.frame(Strain1 = dist_real.df$id1,
                       Real_dist = dist_real.df$value,
                       GalNAc_dist = dist_galnac.df$value)
 
-pdf("04.GalNAc_SV/compare_distance.scatter.pdf", width = 4, height = 4)
+pdf("04.GalNAc_SV/compare_distance.scatter.pdf", width = 4, height = 4) # Supplementary Note 6B
 ggplot(dist.df, aes(Real_dist, GalNAc_dist))+
   geom_point(alpha = 0.7)+
   xlab("Phylogenetic distance based on marker genes")+
@@ -151,7 +152,7 @@ dist.df.long$Distance <- c(rep("Real_dist",   nrow(dist_real.df)),
                            rep("GalNAc_dist", nrow(dist_galnac.df)))
 dist.df.long$Pair <- c(1:nrow(dist_real.df), 1:nrow(dist_galnac.df))
 
-pdf("04.GalNAc_SV/compare_distance.boxplot.pdf", width = 2.5, height = 4)
+pdf("04.GalNAc_SV/compare_distance.boxplot.pdf", width = 2.5, height = 4) # Supplementary Note 6C
 ggplot(dist.df.long, aes(Distance, value))+
   geom_boxplot(aes(color = Distance))+
   geom_point(aes(color = Distance),alpha = 0.7)+

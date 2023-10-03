@@ -104,36 +104,51 @@ write.table(abo_F.prau_sv_pc, "03.Fprau_SV/abo_F.prau_sv_pc.tsv", sep = "\t",col
 
 ## Visualization
 if(!dir.exists("03.Fprau_SV/")){dir.create("03.Fprau_SV/")}
-pdf("03.Fprau_SV/p_sv_fp_pcoa.pdf",width = 5, height = 5)
-for(i in 1:ncol(sgv_full_abo.inter)){
+pdf("03.Fprau_SV/p_sv_fp_pcoa.pdf",width = 5, height = 5) # Extended Data Fig. 5
+for(i in 1:4){
 #  i<-1
-  p_F.prau_pcoa<-ggplot(all_msv_pcoa.fp,aes(Axis.1,Axis.2, color = sgv_full_abo.inter[,i]))+
-    geom_point(size = 2,alpha = 0.5)+
-    xlab(paste("PCo1=",round(100*msv_dist.fp.mds$values$Rel_corr_eig[1],digits = 2),"%",sep = ""))+
-    ylab(paste("PCo2=",round(100*msv_dist.fp.mds$values$Rel_corr_eig[2],digits = 2),"%",sep = ""))+
-    ggtitle(colnames(sgv_full_abo.inter)[i])+
-    scale_color_distiller(palette = "Spectral")+
-    theme(plot.subtitle = element_text(vjust = 1), 
-          plot.caption = element_text(vjust = 1), 
-          axis.line.x =  element_line(),
-          axis.line.y = element_line(),
-          legend.position = 'right',
-          legend.title = element_blank(),
-          legend.key = element_rect(fill = NA), 
-          panel.grid.major = element_line(colour = NA),
-          panel.grid.minor = element_line(colour = NA),
-          panel.background = element_rect(fill = NA))
+  p_F.prau_pcoa<-
+ggplot(all_msv_pcoa.fp,aes(Axis.1,Axis.2, 
+                           color = as.factor(sgv_full_abo.inter[,i])))+
+  geom_point(size = 2,alpha = 0.5)+
+  xlab(paste("PCo1=",round(100*msv_dist.fp.mds$values$Rel_corr_eig[1],digits = 2),"%",sep = ""))+
+  ylab(paste("PCo2=",round(100*msv_dist.fp.mds$values$Rel_corr_eig[2],digits = 2),"%",sep = ""))+
+  ggtitle(colnames(sgv_full_abo.inter)[i])+
+  scale_color_manual(breaks = c(0, 1),
+                     labels = c("Deleted", "Retained"),
+                     values = (mycolor2_blue_red))+
+  theme(plot.subtitle = element_text(vjust = 1), 
+        plot.caption = element_text(vjust = 1), 
+        axis.line.x =  element_line(),
+        axis.line.y = element_line(),
+        legend.position = 'right',
+        legend.title = element_blank(),
+        legend.key = element_rect(fill = NA), 
+        panel.grid.major = element_line(colour = NA),
+        panel.grid.minor = element_line(colour = NA),
+        panel.background = element_rect(fill = NA))
   
   print(p_F.prau_pcoa)
   
 }
+
+ p_F.prau_pcoa<-ggplot(all_msv_pcoa.fp,aes(Axis.1,Axis.2, color = sgv_full_abo.inter[,5]))+
+  geom_point(size = 2,alpha = 0.5)+
+  xlab(paste("PCo1=",round(100*msv_dist.fp.mds$values$Rel_corr_eig[1],digits = 2),"%",sep = ""))+
+  ylab(paste("PCo2=",round(100*msv_dist.fp.mds$values$Rel_corr_eig[2],digits = 2),"%",sep = ""))+
+  ggtitle(colnames(sgv_full_abo.inter)[5])+
+  scale_color_distiller(palette = "Spectral")+
+  theme(plot.subtitle = element_text(vjust = 1), 
+        plot.caption = element_text(vjust = 1), 
+        axis.line.x =  element_line(),
+        axis.line.y = element_line(),
+        legend.position = 'right',
+        legend.title = element_blank(),
+        legend.key = element_rect(fill = NA), 
+        panel.grid.major = element_line(colour = NA),
+        panel.grid.minor = element_line(colour = NA),
+        panel.background = element_rect(fill = NA))
+  print(p_F.prau_pcoa)
+
 dev.off()
-```
-
-## 4 Clustering analysis
-
-```{r 4}
-#clust.fp.dag3<- my_cluster(msv_dist.fp.dag3, ps.cutoff = 0.55)
-#save(clust.fp.dag3, file = "03.Fprau_SV/clust.fp.dag3.RData")
-load("03.Fprau_SV/clust.fp.dag3.RData")
 ```
