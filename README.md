@@ -34,8 +34,11 @@ s02.process_gwas_results.sh: combine and format the GWAS results
 
 s03.run_heritability_analysis.sh: run family-based heritability estimation in DMP cohort
 
+
 gwas_scripts_misc/ : this folder contains helper scripts used in s01 and s02
+
 heritability/ : this folder contains helper scripts used in heritability estimation
+
 plotting/ : this folder contains scripts used for making plots (manhattan, SV per ABO blood group barplots, etc)  
    
 
