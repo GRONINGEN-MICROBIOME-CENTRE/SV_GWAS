@@ -1,8 +1,8 @@
 svtype="dSV"
 
-d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/
+d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/
 res_dir=${d}/results_fastGWA/${svtype}/meta_combined/
-script_dir=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/
+script_dir=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/
 
 
 #
@@ -40,11 +40,12 @@ awk 'BEGIN {FS=OFS="\t"}; {if (NR == 1 || ($10 > 0.05 && $17 == 1)) print }' ${s
 #
 # 4. Clump
 #
+cp -r /groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/ieugwasr_oauth ./
 Rscript ${script_dir}/utils/clump.R ${svtype}.fastGWA.5e-08.rsids.flt.txt
 
 
 #
-# 5. AnnotATE
+# 5. Annotate
 #
 f=${svtype}.fastGWA.5e-08.rsids.flt.txt.clumped_0.1.txt
 

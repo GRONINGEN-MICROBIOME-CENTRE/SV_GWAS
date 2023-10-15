@@ -10,10 +10,10 @@
 #SBATCH --export=NONE
 #SBATCH --get-user-env=L
 
-module load Metal
+module load Metal/2020-05-05-foss-2018b
 
 
-d="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/"
+d="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/"
 script_dir="${d}/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/"
 gcta=${d}/tools/gcta-1.94.1-linux-kernel-3-x86_64/gcta-1.94.1
 pheno_dir=${d}/data_fastGWA/

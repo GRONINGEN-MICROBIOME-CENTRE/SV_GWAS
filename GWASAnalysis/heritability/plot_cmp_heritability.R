@@ -1,4 +1,4 @@
-setwd("~/work/UMCG/data/SV_GWAS/v3")
+setwd("~/work/UMCG/data/SV_GWAS/v4")
 abund <- read.delim("heritability_abund_Ranko.all_sp.txt", header = T, as.is = T, check.names = F, sep = "\t")
 dsv <- read.delim("heritability_dsv.txt", header = T, as.is = T, check.names = F, sep = "\t")
 vsv <- read.delim("heritability_vsv.txt", header = T, as.is = T, check.names = F, sep = "\t")
@@ -68,12 +68,3 @@ ggplot(merged_sv[merged_sv$signif == 1,], aes (x = reorder(SV, h2), y = h2, fill
   facet_grid(SP~., scale="free", space="free",switch = "y") +
   scale_fill_manual(values = colors) 
 dev.off()
-
-sp="F.prausnitzii"
-for (sp in abund$SP){
-  
-  lower <- abund[abund$SP == sp,"lower"]
-  upper <- abund[abund$SP == sp,"upper"]
-
-  cat (sp, nrow(dsv[dsv$SP == sp & dsv$lower > upper,]), nrow(dsv[dsv$SP == sp & dsv$upper < lower,]), "\n")
-}

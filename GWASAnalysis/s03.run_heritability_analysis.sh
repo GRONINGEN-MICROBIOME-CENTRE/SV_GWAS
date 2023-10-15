@@ -3,7 +3,7 @@
 # Run family-based heritability analysis of SVs using GCTA
 #
 
-d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/
+d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/
 #cur_script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cur_script_dir=${d}/scripts/SV_GWAS/GWASAnalysis/heritability/
 

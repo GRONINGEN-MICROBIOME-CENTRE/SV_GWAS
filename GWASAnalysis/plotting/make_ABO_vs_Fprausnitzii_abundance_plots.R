@@ -42,7 +42,7 @@ format_abo_bloodgroup <- function(abo){
 sv <- "F.prausnitzii:102"
 svtype = "dSV"
 
-d <- "/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/"
+d <- "/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/"
 setwd(paste0(d, "/plots/"))
 c="DAG3"
 print(c)

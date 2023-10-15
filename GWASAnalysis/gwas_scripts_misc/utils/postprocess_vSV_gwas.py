@@ -63,4 +63,4 @@ for l in f:
             concordant = "0"
     else:
         continue
-    print("\t".join(spl[:8]) + "\t" + "\t".join(spl[11:15]) + "\t" + ",".join(map(str,betas)) + "\t" + ",".join(map(str,pvals)) + "\t" + concordant + "\t" + all_cohort_signif)
+    print("\t".join(spl[:8]) + "\t" + "\t".join(spl[11:15]) + "\t" + ",".join(map(str,betas)) + "\t" + ",".join(map(str,pvals)) + "\t" + concordant + "\t" + str(all_cohort_signif))

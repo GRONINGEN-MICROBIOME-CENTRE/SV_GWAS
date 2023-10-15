@@ -13,9 +13,9 @@
 ml Metal/2020-05-05-foss-2018b
 
 
-d="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/"
+d="/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/"
 script_dir="${d}/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/"
-gcta=${d}/tools/gcta-1.94.1-linux-kernel-3-x86_64/gcta-1.94.1
+gcta=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/tools/gcta-1.94.1-linux-kernel-3-x86_64/gcta-1.94.1
 pheno_dir=${d}/data_fastGWA/
 
 sv=$1
@@ -54,10 +54,17 @@ do
     echo -e "\n\nRunning the analysis for ${cohort}\n\n"
 
     res_dir=${d}/results_fastGWA/${svtype}/${cohort}/${sv}/adj_Fprau_SVs/
-
+    mkdir -p ${res_dir}
+    
     geno_file=${d}/genotypes/${cohort}/with_relatives/${cohort}_filtered_withrel
     grm=${d}/genotypes/${cohort}/with_relatives/GCTA/GRM_${cohort}_sparse
     gender_file=${d}/genotypes/${cohort}/with_relatives/${cohort}_gender.txt 
+    
+    python3 /groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/scripts/SV_GWAS/GWASAnalysis/gwas_scripts_misc/utils/add_columns_from_file_v2.py \
+    -i /groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/results_fastGWA/${svtype}/${cohort}/${sv}/adj_Fprau_SVs/tmp.qcovar.txt  \
+    -i_m 1 -f ${pheno_dir}/${cohort}.covariates.txt -f_m 1 -f_cols 66 | \
+    cut -f1,2,4- > ${res_dir}/tmp.qcovar.txt
+    cp /groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/results_fastGWA/${svtype}/${cohort}/${sv}/adj_Fprau_SVs/tmp.pheno.txt ${res_dir}/tmp.pheno.txt
     
     #
     # run real GWAS analysis

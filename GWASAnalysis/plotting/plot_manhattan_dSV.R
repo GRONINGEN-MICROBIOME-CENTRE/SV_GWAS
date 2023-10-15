@@ -2,7 +2,7 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 
-setwd('/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/plots')
+#setwd('/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/plots')
 d <- read.delim("dSVs_for_manhattan.txt", header = T, as.is = T, sep = "\t", check.names = F)
 colnames(d) <- c("bac","SNP", "CHR", "BP", "P")
 d$BP <- as.numeric(d$BP)
@@ -55,7 +55,8 @@ ggplot(don, aes(x=BPcum, y=-log10(P))) +
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
     axis.line.y = element_line(color="lightgrey", size = 0.5),
-    axis.ticks.x = element_blank()
-    
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12)
   )
 dev.off()

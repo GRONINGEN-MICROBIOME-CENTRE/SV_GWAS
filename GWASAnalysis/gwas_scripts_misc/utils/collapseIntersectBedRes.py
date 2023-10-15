@@ -11,11 +11,11 @@ if len(sys.argv) > 1:
 else:
     f = sys.stdin
 
-map=defaultdict(set)
+snp2gene = defaultdict(set)
 for line in f:
 	spl = line.strip().split("\t")
-	map[spl[3]].add(spl[7])
+	snp2gene[spl[3]].add(spl[7])
 
-for snp, g in map.items():
+for snp, g in snp2gene.items():
     print (snp + "\t" + ",".join(g))
 

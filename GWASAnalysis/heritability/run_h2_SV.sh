@@ -6,8 +6,8 @@
 #SBATCH --time=5:00:00
 #SBATCH --cpus-per-task=1
 
-d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/
-gcta=${d}/tools/gcta-1.94.1-linux-kernel-3-x86_64/gcta-1.94.1
+d=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v3/
+gcta=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2//tools/gcta-1.94.1-linux-kernel-3-x86_64/gcta-1.94.1
 
 pheno_dir=${d}/data_fastGWA/
 mgrm=/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/genotypes/DAG3/GCTA/mgrm.txt
@@ -43,12 +43,12 @@ $gcta --reml \
     --out ${res_dir}/${sv}_bKsK 
 
 # Run reml on unrelated individuals
-$gcta --reml \
-    --grm ${grm} \
-    --pheno ${pheno_dir}/DAG3.${svtype}.filtered.noheader.txt \
-    --mpheno $col \
-    --qcovar ${res_dir}/tmp.qcovar.txt \
-    --covar ${gender_file} \
-    --out ${res_dir}/${sv}_norel
+#$gcta --reml \
+#    --grm ${grm} \
+#    --pheno ${pheno_dir}/DAG3.${svtype}.filtered.noheader.txt \
+#    --mpheno $col \
+#    --qcovar ${res_dir}/tmp.qcovar.txt \
+#    --covar ${gender_file} \
+#    --out ${res_dir}/${sv}_norel
 
 rm ${res_dir}/tmp.qcovar.txt

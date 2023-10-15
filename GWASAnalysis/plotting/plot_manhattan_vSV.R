@@ -3,7 +3,7 @@ library(tidyr)
 library(dplyr)
 library(ggbreak)
 
-setwd('/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/plots')
+#setwd('/groups/umcg-lifelines/tmp01/projects/dag3_fecal_mgs/umcg-dzhernakova/SV_GWAS/v2/plots')
 d <- read.delim("vSVs_for_manhattan.txt", header =T, as.is = T, sep = "\t", check.names = F)
 colnames(d) <- c("bac","SNP", "CHR", "BP", "P")
 d$BP <- as.numeric(d$BP)
@@ -62,5 +62,6 @@ ggplot(don, aes(x=BPcum, y=log10(P))) +
     axis.line.y = element_line(color="lightgrey", size = 0.5),
     axis.ticks.x = element_blank(),
     axis.text.x =  element_blank(), 
+    axis.text.y = element_text(size = 12)
   )
 dev.off()
