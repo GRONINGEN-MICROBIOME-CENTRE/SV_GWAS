@@ -6,7 +6,7 @@
 
 # Summary
 
-This repository contains the code for the manuscript "Host Genetic Regulation of Human Gut Microbial Structural Variation"
+This repository contains the code for the manuscript "Host Genetic Regulation of Human Gut Microbial Structural Variation".
 
 # Contents
 The code is organised in two folders:
