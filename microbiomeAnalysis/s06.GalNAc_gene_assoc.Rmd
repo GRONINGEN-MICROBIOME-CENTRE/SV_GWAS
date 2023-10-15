@@ -1,0 +1,480 @@
+---
+title: "GalNAc gene association"
+author: "Daoming Wang"
+date: "2023/4/26"
+output:
+  html_document: 
+    theme: flatly
+    highlight: espresso
+    toc: true
+    toc_depth: 4
+    toc_float: true
+  word_document: default
+  pdf_document:
+    includes:
+      in_header: header.tex
+      keep_tex: yes
+      latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1 Preparation
+
+### 1.1 Import
+
+```{r 1.1, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+suppressMessages(source("functions.R"))
+```
+
+### 1.2 Inputs
+
+```{r 1.2, echo=TRUE}
+taxa.dag3 <- read.table("00.rawData/mbio/microbiome_8208samples_S_unfiltered.csv", check.names = F)[,-c(597)]
+taxa.f.dag3 <- read.table("00.rawData/mbio/microbiome_8208samples_F_unfiltered.csv", check.names = F)[,-c(90)]
+
+gene.dag3 <- read.table("00.rawData/shortbred/shortbred_final.res", header = T,row.names = "Family", check.names = F) %>% t
+sv_anno   <- read.table("00.rawData/info/SV_577_579_anno.tsv", sep = "\t", header = T,check.names = F) %>% .[which(grepl("step_", .$`GalNAc_Step/Role`)),]
+load("01.cleanData/assoc_SV/dsgv_full_abo.RData")
+load("01.cleanData/bloodType/bt_dag3.RData")
+load("00.rawData/phenotype/full_phen.RData")
+```
+
+### 1.3 Preparation
+
+```{r 1.3}
+bt_dag3 <- na.omit(bt_dag3)
+
+# Clean shortbred profile
+sv_anno$Gene_ID <- sv_anno$Gene_ID %>% str_replace_all("-", "_")
+colnames(gene.dag3) <- colnames(gene.dag3) %>% str_replace_all(".*HTF", "HTF")
+gene.dag3 <- sv_anno$Gene_ID %>% match(colnames(gene.dag3)) %>% gene.dag3[,.]
+colnames(gene.dag3) <- sv_anno$Gene_Label
+for (i in 1:10) { gene.dag3[,i] <- log(gene.dag3[,i]+1)}
+gene.dag3 <- as.data.frame(gene.dag3)
+
+# Sample intersection
+select.sample <- intersect(rownames(taxa.dag3), rownames(gene.dag3))
+select.sample <- intersect(select.sample, rownames(bt_dag3))
+
+taxa.dag3 <- taxa.dag3[select.sample,]
+taxa.f.dag3 <- taxa.f.dag3[select.sample,]
+gene.dag3 <- gene.dag3[select.sample,]
+dsgv.dag3 <- match(select.sample, rownames(dsgv_full_abo)) %>% dsgv_full_abo[.,]
+bt.dag3 <- bt_dag3[select.sample,]
+bt.dag3$GalNAc_group[bt.dag3$FUT2_secretor_status==0 | bt.dag3$A_antigen==0] <- "Absence"
+bt.dag3$GalNAc_group[bt.dag3$FUT2_secretor_status==1 & bt.dag3$A_antigen==1] <- "Presence"
+
+# Shorten the long taxonomy names, only keep the species names
+colnames(taxa.dag3) <- str_replace_all(colnames(taxa.dag3), ".*s__", "s__")
+colnames(taxa.f.dag3) <- str_replace_all(colnames(taxa.f.dag3), ".*f__", "f__")
+
+# Rescale the table, make sure the sum of each row is 1
+taxa.dag3 <- apply(taxa.dag3, 1, myfun<-function(x){x/sum(x)}) %>% t() %>% as.data.frame()
+taxa.f.dag3 <- apply(taxa.f.dag3, 1, myfun<-function(x){x/sum(x)}) %>% t() %>% as.data.frame()
+
+# Calculate the abundance and prevalence of each species
+spe.meanAbun <- colMeans(taxa.dag3)             # Mean abundance
+spe.nonZero  <- colSums(taxa.dag3>0)/nrow(taxa.dag3) # Prevalence
+
+# Get the list of species which mean abundance is greater than 0.01% and present in more than 5% samples
+spe.keep <- colnames(taxa.dag3)[spe.meanAbun > 0.0001 & spe.nonZero > 0.05]
+
+taxa.clr.dag3 <- microbiome::transform( t(taxa.dag3), transform = "clr") %>% t()
+
+# Filter out the species with a low abundance or low prevalence (or extract the highly abundant and highly prevalent species)
+taxa.clr.filtered.dag3 <- taxa.clr.dag3[,spe.keep] %>% as.data.frame
+```
+
+## 2 Diversity
+
+### 2.1 Diversity calculation
+
+```{r 2.1}
+# Calculate Shannon diversity using vegan's function, and count the species number (richness).
+mbio.alpha.dag3 <- data.frame(Shannon  = vegan::diversity(taxa.dag3, index="shannon"), 
+                              Richness = rowSums(taxa.dag3!=0))
+```
+
+### 2.2 Association between genes and diversity
+
+#### 2.2.1 Mucusal A-antigen presence status and gut microbiome diversity/richness
+
+```{r 2.2.1}
+# Overall correlation between diversity and GalNAc group
+wilcox.test(mbio.alpha.dag3$Shannon~bt.dag3$GalNAc_group) # p-value = 0.3348
+wilcox.test(mbio.alpha.dag3$Richness~bt.dag3$GalNAc_group) # p-value =  0.0125
+
+# Richness
+df<-data.frame(Richness = mbio.alpha.dag3$Richness,
+               GalNAc_group = bt.dag3$GalNAc_group)
+my_comparisons <- list( c("Presence", "Absence"))
+
+if(!dir.exists("06.GalNAc_gene_assoc")){dir.create("06.GalNAc_gene_assoc")}
+pdf("06.GalNAc_gene_assoc/GalNAc_group_richness.pdf", width = 3.5, height = 4.5) 
+ggviolin(df, x = "GalNAc_group", y = "Richness", color = "GalNAc_group",
+         palette = mycolor2_blue_red,
+         add = "boxplot", add.params = list(fill = "white"))+ 
+  stat_compare_means(comparisons = my_comparisons)+
+  xlab("Mucusal A-antigen")+
+  ylab("Richness")+
+  theme(legend.position = "none")
+dev.off()
+
+# Diversity
+df<-data.frame(Shannon = mbio.alpha.dag3$Shannon,
+               GalNAc_group = bt.dag3$GalNAc_group)
+my_comparisons <- list( c("Presence", "Absence"))
+
+pdf("06.GalNAc_gene_assoc/GalNAc_group_shannon.pdf", width = 3.5, height = 4.5)
+ggviolin(df, x = "GalNAc_group", y = "Shannon", color = "GalNAc_group",
+         palette = mycolor2_blue_red,
+         add = "boxplot", add.params = list(fill = "white"))+ 
+  stat_compare_means(comparisons = my_comparisons)+
+  xlab("Mucusal A-antigen")+
+  ylab("Shannon index")+
+  theme(legend.position = "none")
+dev.off()
+```
+
+#### 2.2.2 Correlation between GalNAc gene abundance and gut microbiome diversity/richness
+
+```{r 2.2.2}
+# Correlation between diversity and GalNAc genes
+alpha.gene.cor.galnac <- cor_btw_mats(mbio.alpha.dag3[bt.dag3$GalNAc_group=="Presence", ], 
+                              gene.dag3[bt.dag3$GalNAc_group=="Presence", ])
+alpha.gene.cor.noGalnac <- cor_btw_mats(mbio.alpha.dag3[bt.dag3$GalNAc_group=="Absence", ], 
+                              gene.dag3[bt.dag3$GalNAc_group=="Absence", ])
+alpha.gene.cor.merge <- rbind(data.frame(Group = "Presence", alpha.gene.cor.galnac),
+                              data.frame(Group = "Absence", alpha.gene.cor.noGalnac))
+write.table(alpha.gene.cor.merge, "06.GalNAc_gene_assoc/alpha.gene.cor.merge.tsv", sep = "\t", row.names = F, col.names = T, quote = F)
+
+# Meta-analysis and heterogeneity analysis
+alpha.gene.cor.combine<-cbind(alpha.gene.cor.galnac, alpha.gene.cor.noGalnac)[,-c(15,16)]
+colnames(alpha.gene.cor.combine)<-c("Y","X",
+                                paste("Presence.",colnames(alpha.gene.cor.combine)[3:14],sep = ""),
+                                paste("Absence.",colnames(alpha.gene.cor.combine)[3:14],sep = ""))
+gene_alpha_assoc <- my_batch_meta_lm(alpha.gene.cor.combine, c("Presence", "Absence"), c(3,15), c(5,17))
+
+save(gene_alpha_assoc, file = "06.GalNAc_gene_assoc/gene_alpha_assoc.RData")
+write.table(gene_alpha_assoc, "06.GalNAc_gene_assoc/gene_alpha_assoc.tsv", sep = "\t", row.names = F, col.names = T, quote = F)
+
+
+
+gene.order <- sv_anno$Gene_Label[order(sv_anno$GalNAc_Step)]
+
+pdf("06.GalNAc_gene_assoc/alpha.gene.bar.pdf", width = 5, height = 5) # Extended Data Fig. 9A
+ggplot(alpha.gene.cor.merge, aes(x=X, y=R, group = Group) )+
+  geom_bar(aes(color = Group, fill = Group),width = 0.7,stat = 'identity',position = position_dodge(width = 0.8)) +
+  scale_color_manual(name=NULL,
+                     breaks = c("Presence", "Absence"),
+                     labels = c("Presence", "Absence"),
+                     values = rev(mycolor2_blue_red))+
+  scale_fill_manual(name=NULL,
+                    breaks = c("Presence", "Absence"),
+                    labels = c("Presence", "Absence"),
+                    values = rev(mycolor2_blue_red))+
+  xlab(NULL)+
+  ylab("R")+
+  scale_x_discrete(limits = gene.order)+
+  theme(plot.subtitle = element_text(vjust = 1), 
+        plot.caption = element_text(vjust = 1), 
+        plot.margin=unit(c(2,1,1,3),"cm"),
+        axis.line.x =  element_line(),
+        axis.line.y = element_line(),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position="top",
+        legend.key = element_rect(fill = NA), 
+        legend.text = element_text(size = 10),
+        panel.grid.major = element_line(colour = NA,linetype = "dashed",size = 0.25),
+        panel.grid.minor = element_line(colour = NA), 
+        panel.background = element_rect(fill = NA))+
+  facet_wrap(vars(Y), ncol = 1)
+dev.off()
+
+# Heterogeity 
+pdf("06.GalNAc_gene_assoc/alpha.gene.cor.hetero.pdf", width = 4, height = 4.3) # Main Fig. 5C
+ggplot(gene_alpha_assoc, aes(Presence.R, Absence.R, group = Y, color = Y))+
+  geom_pointrange(aes(xmax = Presence.R + Presence.SE, xmin = Presence.R - Presence.SE), alpha = 0.7)+
+  geom_pointrange(aes(ymax = Absence.R + Absence.SE,   ymin = Absence.R - Absence.SE), alpha = 0.7)+
+  geom_point(alpha = 0.7)+
+  scale_color_manual(name=NULL,
+                     breaks = c("Richness", "Shannon"),
+                     labels = c("Richness", "Shannon"),
+                     values = rev(mycolor2_green_blue))+
+  scale_fill_manual(name=NULL,
+                    breaks = c("Richness", "Shannon"),
+                    labels = c("Richness", "Shannon"),
+                    values = rev(mycolor2_green_blue))+
+  xlim(0.03, 0.281)+
+  ylim(0.03, 0.281)+
+  geom_abline()+
+  xlab("R (Presence)")+
+  ylab("R (Absence)") +
+  theme_linedraw()+
+  theme(legend.position = "bottom",
+        panel.grid.minor = element_line(colour  = "grey80"))
+dev.off()
+
+# Examples
+df<-data.frame(Gene = gene.dag3$lacC,
+               Index = mbio.alpha.dag3$Richness,
+               GalNAc_group = bt.dag3$GalNAc_group) %>%
+  na.omit
+
+pdf("06.GalNAc_gene_assoc/Example_lacC_richness.pdf", height = 4.5, width = 4.5)
+ggplot(df, aes(Gene, Index, group = GalNAc_group, color = GalNAc_group))+
+  geom_point(size = 3,alpha = 0.5)+
+  geom_smooth(aes(fill = GalNAc_group),method = 'lm', color = 'white', linetype = 'dashed')+
+  scale_color_manual(breaks = c("Presence", "Absence"),
+                     labels = c("Presence", "Absence"),
+                     values = rev(mycolor2_blue_red))+
+#  ggtitle(text_r)+
+  xlab("log(lacC abundance+1)")+
+#  scale_x_log10()+
+  ylab("Richness")+ ##
+  theme_classic2()+
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5,size = 10))
+dev.off()
+
+
+df<-data.frame(Gene = gene.dag3$`gatY-kbaY`,
+               Index = mbio.alpha.dag3$Richness,
+               GalNAc_group = bt.dag3$GalNAc_group) %>%
+  na.omit
+pdf("06.GalNAc_gene_assoc/Example_kbaY_richness.pdf", height = 4.5, width = 4.5)
+ggplot(df, aes(Gene, Index, group = GalNAc_group, color = GalNAc_group))+
+  geom_point(size = 3,alpha = 0.5)+
+  geom_smooth(aes(fill = GalNAc_group),method = 'lm', color = 'white', linetype = 'dashed')+
+  scale_color_manual(breaks = c("Presence", "Absence"),
+                     labels = c("Presence", "Absence"),
+                     values = rev(mycolor2_blue_red))+
+  #  ggtitle(text_r)+
+  xlab("log(gatY-kbaY abundance+1)")+
+  #  scale_x_log10()+
+  ylab("Richness")+ ##
+  theme_classic2()+
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5,size = 10))
+dev.off()
+```
+
+
+## 4 Phenotypes
+
+### 4.1 Association between GalNAc genes and phenotypes
+
+```{r 4}
+phen.dag3 <- rownames(gene.dag3) %>% match(rownames(full_phen)) %>% full_phen[.,]
+phen.dag3<-phen.dag3[,colSums(!is.na(phen.dag3)) > 0.1*nrow(phen.dag3)]
+rownames(phen.dag3)<-rownames(gene.dag3)
+
+cov.dag3 <- phen.dag3[,c(1,4)]
+test.dag3 <- phen.dag3[,-c(1,4)]
+
+gene_phen_assoc.high<-lm_btw_mats(gene.dag3[bt.dag3$GalNAc_group=="Presence",], test.dag3[bt.dag3$GalNAc_group=="Presence",],cov.dag3[bt.dag3$GalNAc_group=="Presence",], c("Age", "Sex"))
+gene_phen_assoc.low<-lm_btw_mats(gene.dag3[bt.dag3$GalNAc_group=="Absence",], test.dag3[bt.dag3$GalNAc_group=="Absence",],cov.dag3[bt.dag3$GalNAc_group=="Absence",], c("Age", "Sex"))
+
+# Meta-analysis
+gene_phen_assoc.merge<-cbind(gene_phen_assoc.high, gene_phen_assoc.low)[,-c(15,16)]
+colnames(gene_phen_assoc.merge)<-c("Y","X",
+                                paste("Presence.",colnames(gene_phen_assoc.merge)[3:14],sep = ""),
+                                paste("Absence.",colnames(gene_phen_assoc.merge)[3:14],sep = ""))
+gene_phen_assoc <- my_batch_meta_lm(gene_phen_assoc.merge, c("Presence", "Absence"), c(3,15), c(4,16))
+save(gene_phen_assoc, file = "06.GalNAc_gene_assoc/gene_phen_assoc.RData")
+
+gene_phen_assoc.sig <- gene_phen_assoc[which(gene_phen_assoc$Presence.bonferroni.p<0.05 |
+                                               gene_phen_assoc$Absence.bonferroni.p<0.05|
+                                               gene_phen_assoc$Meta.bonferroni.p<0.05),]
+save(gene_phen_assoc.sig, file = "06.GalNAc_gene_assoc/gene_phen_assoc.sig.RData")
+write.table(gene_phen_assoc.sig, "06.GalNAc_gene_assoc/gene_phen_assoc.sig.tsv",
+            sep = "\t",row.names = F, col.names = T, quote = F)
+```
+
+### 4.2 Visualization
+
+```{r 4.2}
+load("06.GalNAc_gene_assoc/gene_phen_assoc.RData")
+load("06.GalNAc_gene_assoc/gene_phen_assoc.sig.RData")
+
+
+# Visualization
+gene_phen_assoc.sig.phen <- gene_phen_assoc$X[which(gene_phen_assoc$Presence.bonferroni.p<0.05 | gene_phen_assoc$Absence.bonferroni.p<0.05)] %>% unique() %>% as.character()
+gene_phen_assoc.sig.gene <- gene_phen_assoc$Y[which(gene_phen_assoc$Presence.bonferroni.p<0.05 | gene_phen_assoc$Absence.bonferroni.p<0.05)] %>% unique()%>% as.character()
+
+## Overall association
+# Beta
+gene_phen.beta <- reshape(gene_phen_assoc[,c("X", "Y", "Meta.beta")],idvar = "X", timevar = "Y", direction = "wide")
+rownames(gene_phen.beta)<-as.character(gene_phen.beta$X)
+gene_phen.beta<-gene_phen.beta[,-1]
+colnames(gene_phen.beta)<-str_replace_all(colnames(gene_phen.beta),"^Meta.beta.", "")
+
+# FDR
+gene_phen.bonferroni.p <- reshape(gene_phen_assoc[,c("X", "Y", "Meta.bonferroni.p")],idvar = "X", timevar = "Y", direction = "wide")
+rownames(gene_phen.bonferroni.p)<-as.character(gene_phen.bonferroni.p$X)
+gene_phen.bonferroni.p<-gene_phen.bonferroni.p[,-1]
+colnames(gene_phen.bonferroni.p)<-str_replace_all(colnames(gene_phen.bonferroni.p),"^Meta.bonferroni.p.", "")
+
+# P-hetero
+gene_phen.p.hetero <- reshape(gene_phen_assoc[,c("X", "Y", "Meta.hetero.p")],idvar = "X", timevar = "Y", direction = "wide")
+rownames(gene_phen.p.hetero)<-as.character(gene_phen.p.hetero$X)
+gene_phen.p.hetero<-gene_phen.p.hetero[,-1]
+colnames(gene_phen.p.hetero)<-str_replace_all(colnames(gene_phen.p.hetero),"^Meta.hetero.p.", "")
+
+# Plot matrices
+gene_phen.beta.plot <- gene_phen.beta %>% .[match(gene_phen_assoc.sig.phen, rownames(.)),
+                                            match(gene_phen_assoc.sig.gene, colnames(.))]
+gene_phen.bonferroni.p.plot  <- gene_phen.bonferroni.p  %>% .[match(gene_phen_assoc.sig.phen, rownames(.)),
+                                            match(gene_phen_assoc.sig.gene, colnames(.))]
+gene_phen.p.hetero.plot  <- gene_phen.p.hetero  %>% .[match(gene_phen_assoc.sig.phen, rownames(.)),
+                                            match(gene_phen_assoc.sig.gene, colnames(.))]
+
+# Sign matrix
+gene_phen.sign.plot<-gene_phen.beta.plot
+gene_phen.sign.plot[gene_phen.bonferroni.p.plot<0.05 & gene_phen.p.hetero.plot>=0.05]<-"*"
+gene_phen.sign.plot[gene_phen.bonferroni.p.plot<0.05 & gene_phen.p.hetero.plot <0.05]<-"#"
+gene_phen.sign.plot[gene_phen.bonferroni.p.plot>=0.05]<-""
+
+col_beta <- colorRamp2(c(-0.16, 0, 0.16), c("#1772b4", "white", "#de1c31"))
+
+pdf("06.GalNAc_gene_assoc/gene.phen.assoc.heatmap.meta.pdf", height = 3, width = 6)
+gene_phen.beta.plot %>%
+  Heatmap(.,
+          col = col_beta,
+          cluster_rows = FALSE,cluster_columns = FALSE,
+          show_row_dend = FALSE,show_column_dend = FALSE,
+          show_row_names = T,row_names_side = "right",
+          column_names_rot = 90,
+          #column_labels = Cohort_label[-1],
+          border = TRUE,border_gp = gpar(col = "black",lwd = 1),
+          #left_annotation = phen_anno,
+          #right_annotation = phen_n_anno,
+          #top_annotation = cohort_anno,
+          heatmap_legend_param = list(direction = "horizontal",title = "R",legend_width = unit(4, "cm")),
+          cell_fun = function(j, i, x, y, w, h, col) { # add text to each grid
+            grid.text(as.matrix(gene_phen.sign.plot)[i,j], x, y)}
+          )
+dev.off()
+
+## Presence association
+# Beta
+gene_phen.high.beta <- reshape(gene_phen_assoc[,c("X", "Y", "Presence.Beta")],idvar = "X", timevar = "Y", direction = "wide")
+rownames(gene_phen.high.beta)<-as.character(gene_phen.high.beta$X)
+gene_phen.high.beta<-gene_phen.high.beta[,-1]
+colnames(gene_phen.high.beta)<-str_replace_all(colnames(gene_phen.high.beta),"^Presence.Beta.", "")
+
+# FDR
+gene_phen.high.bonferroni.p <- reshape(gene_phen_assoc[,c("X", "Y", "Presence.bonferroni.p")],idvar = "X", timevar = "Y", direction = "wide")
+rownames(gene_phen.high.bonferroni.p)<-as.character(gene_phen.high.bonferroni.p$X)
+gene_phen.high.bonferroni.p<-gene_phen.high.bonferroni.p[,-1]
+colnames(gene_phen.high.bonferroni.p)<-str_replace_all(colnames(gene_phen.high.bonferroni.p),"^Presence.bonferroni.p.", "")
+
+# Plot matrices
+gene_phen.high.beta.plot <- gene_phen.high.beta %>% .[match(gene_phen_assoc.sig.phen, rownames(.)),
+                                            match(gene_phen_assoc.sig.gene, colnames(.))]
+gene_phen.high.bonferroni.p.plot  <- gene_phen.high.bonferroni.p  %>% .[match(gene_phen_assoc.sig.phen, rownames(.)),
+                                            match(gene_phen_assoc.sig.gene, colnames(.))]
+## Absence association
+# Beta
+gene_phen.low.beta <- reshape(gene_phen_assoc[,c("X", "Y", "Absence.Beta")],idvar = "X", timevar = "Y", direction = "wide")
+rownames(gene_phen.low.beta)<-as.character(gene_phen.low.beta$X)
+gene_phen.low.beta<-gene_phen.low.beta[,-1]
+colnames(gene_phen.low.beta)<-str_replace_all(colnames(gene_phen.low.beta),"^Absence.Beta.", "")
+
+# FDR
+gene_phen.low.bonferroni.p <- reshape(gene_phen_assoc[,c("X", "Y", "Absence.bonferroni.p")],idvar = "X", timevar = "Y", direction = "wide")
+rownames(gene_phen.low.bonferroni.p)<-as.character(gene_phen.low.bonferroni.p$X)
+gene_phen.low.bonferroni.p<-gene_phen.low.bonferroni.p[,-1]
+colnames(gene_phen.low.bonferroni.p)<-str_replace_all(colnames(gene_phen.low.bonferroni.p),"^Absence.bonferroni.p.", "")
+
+# Plot matrices
+gene_phen.low.beta.plot <- gene_phen.low.beta %>% .[match(gene_phen_assoc.sig.phen, rownames(.)),
+                                            match(gene_phen_assoc.sig.gene, colnames(.))]
+gene_phen.low.bonferroni.p.plot  <- gene_phen.low.bonferroni.p  %>% .[match(gene_phen_assoc.sig.phen, rownames(.)),
+                                            match(gene_phen_assoc.sig.gene, colnames(.))]
+
+# Sign matrix
+gene_phen.high.sign.plot<-gene_phen.high.beta.plot
+gene_phen.high.sign.plot[gene_phen.high.bonferroni.p.plot<0.05 & gene_phen.low.bonferroni.p.plot < 0.05]<-"*"
+gene_phen.high.sign.plot[gene_phen.high.bonferroni.p.plot<0.05 & gene_phen.low.bonferroni.p.plot >= 0.05]<-"#"
+gene_phen.high.sign.plot[gene_phen.high.bonferroni.p.plot>=0.05]<-""
+
+gene_phen.low.sign.plot<-gene_phen.low.beta.plot
+gene_phen.low.sign.plot[gene_phen.low.bonferroni.p.plot<0.05 & gene_phen.high.bonferroni.p.plot < 0.05]<-"*"
+gene_phen.low.sign.plot[gene_phen.low.bonferroni.p.plot<0.05 & gene_phen.high.bonferroni.p.plot >= 0.05]<-"#"
+gene_phen.low.sign.plot[gene_phen.low.bonferroni.p.plot>=0.05]<-""
+
+col_beta.high <- colorRamp2(c(-0.16, 0, 0.16), c("#1772b4", "white", "#de1c31"))
+
+pdf("06.GalNAc_gene_assoc/gene.phen.assoc.heatmap.Presence.pdf", height = 3, width = 6) # Main Fig. 5D
+gene_phen.high.beta.plot %>%
+  Heatmap(.,
+          col = col_beta.high,
+          cluster_rows = FALSE,cluster_columns = FALSE,
+          show_row_dend = FALSE,show_column_dend = FALSE,
+          show_row_names = T,row_names_side = "right",
+          column_names_rot = 90,
+          #column_labels = Cohort_label[-1],
+          border = TRUE,border_gp = gpar(col = "black",lwd = 1),
+          #left_annotation = phen_anno,
+          #right_annotation = phen_n_anno,
+          #top_annotation = cohort_anno,
+          heatmap_legend_param = list(direction = "horizontal",title = "R",legend_width = unit(4, "cm")),
+          cell_fun = function(j, i, x, y, w, h, col) { # add text to each grid
+            grid.text(as.matrix(gene_phen.high.sign.plot)[i,j], x, y)}
+          )
+dev.off()
+
+col_beta.low <- colorRamp2(c(-0.16, 0, 0.16), c("#1772b4", "white", "#de1c31"))
+
+pdf("06.GalNAc_gene_assoc/gene.phen.assoc.heatmap.Absence.pdf", height = 3, width = 6) # Main Fig. 5E
+gene_phen.low.beta.plot %>% as.matrix() %>%
+  Heatmap(.,
+          col = col_beta.low,
+          cluster_rows = FALSE,cluster_columns = FALSE,
+          show_row_dend = FALSE,show_column_dend = FALSE,
+          show_row_names = T,row_names_side = "right",
+          column_names_rot = 90,
+          #column_labels = Cohort_label[-1],
+          border = TRUE,border_gp = gpar(col = "black",lwd = 1),
+          #left_annotation = phen_anno,
+          #right_annotation = phen_n_anno,
+          #top_annotation = cohort_anno,
+          heatmap_legend_param = list(direction = "horizontal",title = "R",legend_width = unit(4, "cm")),
+          cell_fun = function(j, i, x, y, w, h, col) { # add text to each grid
+            grid.text(as.matrix(gene_phen.low.sign.plot)[i,j], x, y)}
+          )
+dev.off()
+
+
+# Heterogeity 
+pdf("06.GalNAc_gene_assoc/phen.gene.cor.hetero.pdf", width = 6, height = 6.5) # Extended Data Fig. 9B
+ggplot(gene_phen_assoc.sig[gene_phen_assoc.sig$Meta.hetero.p < 0.05,], aes(Presence.Beta, Absence.Beta, group = X, color = X))+
+  geom_pointrange(aes(xmax = Presence.Beta + Presence.SE, xmin = Presence.Beta - Presence.SE), alpha = 0.7)+
+  geom_pointrange(aes(ymax = Absence.Beta + Absence.SE,   ymin = Absence.Beta - Absence.SE), alpha = 0.7)+
+  geom_point(alpha = 0.7)+
+  scale_color_manual(name = NULL,
+                     values = rev(wes_palette("Zissou1", 8, type = "continuous")))+
+  scale_fill_manual(name = NULL,
+                    values = rev(wes_palette("Zissou1", 8, type = "continuous")))+
+  xlim(-0.2, 0.2)+
+  ylim(-0.2, 0.2)+
+  geom_abline(linetype="dotted",color = "red")+
+  geom_hline(yintercept=0)+
+  geom_vline(xintercept=0)+
+  xlab("Effect size (Presence)")+
+  ylab("Effect size (Absence)") +
+  theme_linedraw()+
+  theme(legend.position = "bottom",
+        panel.grid.minor = element_line(colour  = "grey80"))
+dev.off()
+
+
+
+```
+
+
+
