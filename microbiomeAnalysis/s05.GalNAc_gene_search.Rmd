@@ -90,7 +90,7 @@ colnames(GalNAc_check) <- step_list
 Species <- uhgg_hits_mat.anno$Species %>% str_replace_all("_.*", "")
 
 if(!dir.exists("05.GalNAc_gene_search")){dir.create("05.GalNAc_gene_search")}
-pdf("05.GalNAc_gene_search/UHGG.Pathway_completeness_upset.pdf", height = 3.5, width = 10) # Main Fig. 4A
+pdf("05.GalNAc_gene_search/UHGG.Pathway_completeness_upset.pdf", height = 3.5, width = 10) # Main Fig. 4a
 ComplexUpset::upset(GalNAc_check,rev(step_list),
                     mode='exclusive_intersection',
                     sort_sets=FALSE,
@@ -128,7 +128,7 @@ p_complete_prop<-plot_grid(p_complete_prop_fp,p_complete_prop_ca,
                          #labels = c("vSVs-BAs", "dSVs-BAs"),
                          ncol = 2,label_size	= 8,vjust = 0)
 
-pdf("05.GalNAc_gene_search/GalNAc_completeness_proportion_species.pdf", height = 5, width = 10) # Main Fig. 4B and C
+pdf("05.GalNAc_gene_search/GalNAc_completeness_proportion_species.pdf", height = 5, width = 10) # Main Fig. 4b and c
 print(p_complete_prop)
 dev.off()
 ```

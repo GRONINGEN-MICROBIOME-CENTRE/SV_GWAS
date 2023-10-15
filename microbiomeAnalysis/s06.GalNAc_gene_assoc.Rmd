@@ -165,7 +165,7 @@ write.table(gene_alpha_assoc, "06.GalNAc_gene_assoc/gene_alpha_assoc.tsv", sep =
 
 gene.order <- sv_anno$Gene_Label[order(sv_anno$GalNAc_Step)]
 
-pdf("06.GalNAc_gene_assoc/alpha.gene.bar.pdf", width = 5, height = 5) # Extended Data Fig. 9A
+pdf("06.GalNAc_gene_assoc/alpha.gene.bar.pdf", width = 5, height = 5) # Extended Data Fig. 10a
 ggplot(alpha.gene.cor.merge, aes(x=X, y=R, group = Group) )+
   geom_bar(aes(color = Group, fill = Group),width = 0.7,stat = 'identity',position = position_dodge(width = 0.8)) +
   scale_color_manual(name=NULL,
@@ -195,7 +195,7 @@ ggplot(alpha.gene.cor.merge, aes(x=X, y=R, group = Group) )+
 dev.off()
 
 # Heterogeity 
-pdf("06.GalNAc_gene_assoc/alpha.gene.cor.hetero.pdf", width = 4, height = 4.3) # Main Fig. 5C
+pdf("06.GalNAc_gene_assoc/alpha.gene.cor.hetero.pdf", width = 4, height = 4.3) # Main Fig. 5c
 ggplot(gene_alpha_assoc, aes(Presence.R, Absence.R, group = Y, color = Y))+
   geom_pointrange(aes(xmax = Presence.R + Presence.SE, xmin = Presence.R - Presence.SE), alpha = 0.7)+
   geom_pointrange(aes(ymax = Absence.R + Absence.SE,   ymin = Absence.R - Absence.SE), alpha = 0.7)+
@@ -409,7 +409,7 @@ gene_phen.low.sign.plot[gene_phen.low.bonferroni.p.plot>=0.05]<-""
 
 col_beta.high <- colorRamp2(c(-0.16, 0, 0.16), c("#1772b4", "white", "#de1c31"))
 
-pdf("06.GalNAc_gene_assoc/gene.phen.assoc.heatmap.Presence.pdf", height = 3, width = 6) # Main Fig. 5D
+pdf("06.GalNAc_gene_assoc/gene.phen.assoc.heatmap.Presence.pdf", height = 3, width = 6) # Main Fig. 5d
 gene_phen.high.beta.plot %>%
   Heatmap(.,
           col = col_beta.high,
@@ -430,7 +430,7 @@ dev.off()
 
 col_beta.low <- colorRamp2(c(-0.16, 0, 0.16), c("#1772b4", "white", "#de1c31"))
 
-pdf("06.GalNAc_gene_assoc/gene.phen.assoc.heatmap.Absence.pdf", height = 3, width = 6) # Main Fig. 5E
+pdf("06.GalNAc_gene_assoc/gene.phen.assoc.heatmap.Absence.pdf", height = 3, width = 6) # Main Fig. 5e
 gene_phen.low.beta.plot %>% as.matrix() %>%
   Heatmap(.,
           col = col_beta.low,
@@ -451,7 +451,7 @@ dev.off()
 
 
 # Heterogeity 
-pdf("06.GalNAc_gene_assoc/phen.gene.cor.hetero.pdf", width = 6, height = 6.5) # Extended Data Fig. 9B
+pdf("06.GalNAc_gene_assoc/phen.gene.cor.hetero.pdf", width = 6, height = 6.5) # Extended Data Fig. 10b
 ggplot(gene_phen_assoc.sig[gene_phen_assoc.sig$Meta.hetero.p < 0.05,], aes(Presence.Beta, Absence.Beta, group = X, color = X))+
   geom_pointrange(aes(xmax = Presence.Beta + Presence.SE, xmin = Presence.Beta - Presence.SE), alpha = 0.7)+
   geom_pointrange(aes(ymax = Absence.Beta + Absence.SE,   ymin = Absence.Beta - Absence.SE), alpha = 0.7)+
