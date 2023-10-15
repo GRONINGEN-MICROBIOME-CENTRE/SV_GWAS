@@ -11,7 +11,7 @@ This repository contains the code for the manuscript "Host Genetic Regulation of
 # Contents
 The code is organised in two folders:
 
-- microbiomeAnalysis contains scripts for gut microbial SV analysis and downstream microbiome-related analyses
+- microbiomeAnalysis contains scripts for the gut microbial SV analysis and downstream microbiome-related analyses
 - GWASAnalysis contains scripts for host genetics-related analyses, including association analyses and heritability
 
 ## Description of each folder
