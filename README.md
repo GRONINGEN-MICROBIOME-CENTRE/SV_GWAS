@@ -21,7 +21,7 @@ Here we describe the general workflow, for details please see the comments and d
 
 - **s01.cleanData.Rmd**: Clean the raw input data.
 
-- **s02.SV_summary.Rmd**: Summary statistics for gut microbial SV profiles.(Main Fig. 1b and c; Extended Data Fig. 1a-d)
+- **s02.SV_summary.Rmd**: Summary statistics for gut microbial SV profiles.(Main Fig. 1b and c; Extended Data Fig. 1a-d).
 
 - **s03.Fprau_SV.Rmd**: Analysis of SVs of F. prausnitzii, including the calculation of the populational genetic structure of F. prausnitzii, the correlation between SVs, and associations between SVs and top principal components of the populational genetic structure of F. prausnitzii. (Extended Data Fig. 5)
 
