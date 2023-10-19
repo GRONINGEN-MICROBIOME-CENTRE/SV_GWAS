@@ -21,7 +21,7 @@ Here we describe the general workflow, for details please see the comments and d
 
 - **s01.cleanData.Rmd**: Clean the raw input data.
 
-- **s02.SV_summary.Rmd**: Summary statistics for gut microbial SV profiles.(Main Fig. 1b and c; Extended Data Fig. 1a-d)
+- **s02.SV_summary.Rmd**: Summary statistics for gut microbial SV profiles.(Main Fig. 1b and c; Extended Data Fig. 1a-d).
 
 - **s03.Fprau_SV.Rmd**: Analysis of SVs of F. prausnitzii, including the calculation of the populational genetic structure of F. prausnitzii, the correlation between SVs, and associations between SVs and top principal components of the populational genetic structure of F. prausnitzii. (Extended Data Fig. 5)
 
@@ -31,7 +31,7 @@ Here we describe the general workflow, for details please see the comments and d
 
 - **s06.GalNAc_gene_assoc.Rmd**: Association analysis of GalNAc gene abundance with gut microbiome diversity/richness and host phenotypes. (Main Fig. 5c-e; Extended Data Fig. 10a and b)
 
-- **s07.Experiment.Rmd**: Visualization of growth curves and qPCR results. (Main Fig. 3d-e; Extended Data Fig. 6; Extended Data Fig. 7)
+- **s07.Experiment.Rmd**: Visualization of growth curves and qPCR results. (Main Fig. 3d-f; Extended Data Fig. 6-8)
 
 ### GWASAnalysis folder
 

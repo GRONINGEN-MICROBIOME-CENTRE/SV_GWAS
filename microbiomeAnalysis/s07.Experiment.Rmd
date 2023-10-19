@@ -44,26 +44,32 @@ if(!dir.exists("07.Experiment")){dir.create("07.Experiment")}
 SE <- summarySE(growth, measurevar="OD600", groupvars=c("Strains","Time","Sugars","Strain"))
 
 ###########HTF-383############
+HTF383 <- subset(growth, growth$Strains %in% "HTF383")
+HTF383_GalNAc <- subset(HTF383, HTF383$Sugars %in% "GalNAc")
+
 SE_383 <- subset(SE, SE$Strains %in% "HTF383")
 SE_383_GalNAc <- subset(SE_383, SE_383$Sugars %in% "GalNAc")
+
 f <- ggplot(SE_383_GalNAc, aes(x=Time, y=OD600, color="red"))+ 
-  geom_errorbar(aes(ymin=OD600-se, ymax=OD600+se), width=.1,position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=OD600-sd, ymax=OD600+sd),width=0.8,position=position_dodge(0.05)) +
+  geom_point(data=HTF383_GalNAc, size=1.5, shape=17)+
   geom_line(linetype= c("dashed")) + 
-  geom_point(size=1)+theme_tufte()+
+  geom_point(size=1.5)+theme_tufte()+
   theme(title =element_text(size=8, face='bold'),
         axis.title.x = element_text(size=11, face="bold"),
         axis.title.y = element_text(size=11, face="bold"),
         axis.text.y = element_text(size=7.5),
-        axis.text.x = element_text(size=7.5),
-        axis.line = element_line(size=1, colour = "black"),
-        legend.position = "none",
+        axis.text.x = element_text(size=7.5))+
+  labs(title="HTF-383 (GalNAc)",x="Time (h)", y = "OD600")+
+  scale_color_manual(values=c('red2'))+
+  theme(axis.line = element_line(size=1, colour = "black"))+
+  theme(legend.position = "none",
         legend.key.size = unit(0.4, 'cm'),
         legend.text = element_text(size=7.5))+
-  labs(title="HTF-383 (GalNAc)",x="Time (h)", y = "OD600")+
-  scale_color_manual(values=c('red','black'))+
-  theme()+
   scale_x_continuous(breaks=seq(0, 40, 4))+
-  scale_y_continuous(limits = c(0.08,0.8),breaks=seq(0.0,1, 0.2))
+  scale_y_continuous(limits = c(0.08,1),breaks=seq(0.0,1, 0.2))+
+  theme(legend.title=element_blank())
+
 
 ggsave("07.Experiment/HTF-383.pdf", width =4, height = 4) # Extended Data Fig. 6
 
@@ -72,7 +78,7 @@ SE1 <- subset(SE,SE$Time %in% c("0","4","6","8","10","12","14","16","18","20","2
 
 SE3 <- subset(SE1,SE1$Sugars %in% c("GalNAc") )
 f2 <- ggplot(SE3, aes(x=Time, y=OD600, group =Strains,color = Strain))+ 
-  geom_errorbar(aes(ymin=OD600-se, ymax=OD600+se), width=.1,position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=OD600-sd, ymax=OD600+sd), width=.1,position=position_dodge(0.05)) +
   geom_line(linetype= c("dashed"))+
   geom_point()+theme_classic()+
   theme(title =element_text(size=9, face='bold'),
@@ -93,7 +99,7 @@ ggsave("07.Experiment/GalNAc.pdf", width=4, height=4) # Main Fig. 3d
 SE4 <- subset(SE1,SE1$Sugars %in% c("Gal") )
 
 f3 <- ggplot(SE4, aes(x=Time, y=OD600, group =Strains, color= Strain))+ 
-  geom_errorbar(aes(ymin=OD600-se, ymax=OD600+se), width=.1,position=position_dodge(0.05)) +
+  geom_errorbar(aes(ymin=OD600-sd, ymax=OD600+sd), width=.1,position=position_dodge(0.05)) +
   geom_line(linetype= c("dashed")) + 
   geom_point()+theme_classic()+
   theme(title =element_text(size=9, face='bold'),
@@ -108,11 +114,73 @@ f3 <- ggplot(SE4, aes(x=Time, y=OD600, group =Strains, color= Strain))+
   scale_y_continuous(limits = c(0.08,1.1),breaks=seq(0.0,1.2, 0.1))
 
 ggsave("07.Experiment/Gal.pdf", width=4, height=4) # Main Fig. 3e
+
+
+################ multiple_sugars #######
+
+SE2 <- subset(SE1,SE1$Sugars %in% c('YCFA','Glc',"Lac","Man","GlcNAc","Fruc","NeuNAc","2FL") )
+SE2$Sugars <- factor(SE2$Sugars,levels=c('YCFA','Glc',"Lac","Man","GlcNAc","Fruc","NeuNAc","2FL"))
+
+f1 <- ggplot(SE2, aes(x=Time, y=OD600, group =Strains, color= Strain))+ 
+  geom_errorbar(aes(ymin=OD600-sd, ymax=OD600+sd), width=.1,position=position_dodge(0.05)) +
+  geom_line(linetype= c("dashed")) + 
+  facet_wrap(.~Sugars,ncol=4,scales='free')+
+  geom_point(size=1)+theme_tufte()+
+  theme(title =element_text(size=8, face='bold'),
+        axis.title.x = element_text(size=11, face="bold"),
+        axis.title.y = element_text(size=11, face="bold"),
+        axis.text.y = element_text(size=7.5),
+        axis.text.x = element_text(size=7.5))+
+  labs(title="",x="Time (h)", y = "OD600")+
+  scale_color_manual(values=c('red','black'))+
+  theme(axis.line = element_line(size=1, colour = "black"))+
+  theme(legend.position = c(0.1,0.92),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.text = element_text(size=7.5))+
+  scale_x_continuous(breaks=seq(0, 24, 4))+
+  scale_y_continuous(limits = c(0.08,1.6),breaks=seq(0.0,1.6, 0.2))+
+  theme(legend.title=element_blank())
+
+ggsave("07.Experiment/multiple_sugars.pdf", width=8.5, height=4) # Extended Data Fig. 7
+
+
 ```
 
 ## 3 qPCR
 
 ```{r 3}
+
+library(gg.gap)
+fig3f <- read.table("00.rawData/experiment/fig3f.txt", header=TRUE,stringsAsFactors = F,sep="\t")
+fig3f$Gene <- factor(fig3f$Gene, levels= c("agaC","agaD","agaV","agaF"))
+
+SEfig3f <- summarySE(fig3f, measurevar="RelativeExpression", groupvars=c("Gene","Medium","F..prausnitziiStrain"))
+SEfig3f$Gene <- factor(SEfig3f$Gene, levels= c("agaC","agaD","agaV","agaF"))
+SEfig3f$F..prausnitziiStrain <- factor(SEfig3f$F..prausnitziiStrain, levels= c("HTF-495","ATCC27768"))
+
+fig_3f <- ggplot(SEfig3f, aes(x=F..prausnitziiStrain, y=RelativeExpression, fill= Gene))+ 
+  theme_classic()+
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_errorbar(aes(ymin=RelativeExpression-se, ymax=RelativeExpression+se),
+                width=0.2,position=position_dodge(width=0.9)) +
+  geom_point(data=fig3f, size=2, position=position_dodge(width=0.9))+
+  theme(axis.text.x = element_text(size=11),
+        axis.title.y = element_text(size=11),
+        legend.title=element_blank(),
+        legend.position = c(0.65,0.7))+
+  labs(x="", y = "Fold change")+
+  scale_fill_manual(values=c('#1874CD','#4876FF','#80A8FF','#B5CCFF'))+
+  scale_y_continuous(breaks=seq(0, 80, 10))
+
+fig_3f <- fig3 + theme(axis.line.x = element_blank())
+
+gg.gap(plot=fig3,
+       segments = c(30,50),
+       tick_width = c(10,10),
+       ylim = c(0,85))
+add.legend(plot = fig3)  #main Fig 3f
+
+
 ####gene lacC###
 rpoA_lacC <- subset(rpoA, rpoA$Gene %in% "lacC")
 SE_lacC <- summarySE(rpoA_lacC , measurevar="Relative.expression.to.glucose..corrected.for.rpoA.", groupvars=c("strain","Medium","comparison"))
@@ -138,7 +206,7 @@ p_lacC <- ggplot(SE_lacC, aes(x=comparison, y=Relative.expression.to.glucose..co
         legend.title = element_text(size=6), 
         legend.text = element_text(size=6),
         text = element_text(size = 8))+ 
-  stat_compare_means(data=rpoA_lacC,label ="p.signif",
+  stat_compare_means(data=rpoA_lacC,label ="p.format",
                      method = "t.test",show.legend = F,paird=F,size= 3,comparisons = my_comparisons)+
   labs(title = "lacC",x = "", y = "Fold Change")+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
@@ -165,7 +233,7 @@ p_ptsH <- ggplot(SE_ptsH, aes(x=comparison, y=Relative.expression.to.glucose..co
         text = element_text(size = 8)) +  
   labs(title = "ptsH", x = "", y = "Fold Change")+
   scale_fill_brewer(palette="Paired")+
-  stat_compare_means(data=rpoA_ptsH,label ="p.signif",
+  stat_compare_means(data=rpoA_ptsH,label ="p.format",
                      method = "t.test",show.legend = F,paird=F,size= 3,comparisons = my_comparisons)+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
 
@@ -191,7 +259,7 @@ p_kbaZ <- ggplot(SE_kbaZ, aes(x=comparison, y=Relative.expression.to.glucose..co
         text = element_text(size = 8)) +  
   labs(title = "gatZ-kbaZ", x = "", y = "Fold Change")+
   scale_fill_brewer(palette="Paired")+
-  stat_compare_means(data=rpoA_kbaZ,label ="p.signif",
+  stat_compare_means(data=rpoA_kbaZ,label ="p.format",
                      method = "t.test",show.legend = F,paird=F,size= 3,comparisons = my_comparisons)+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
 
@@ -216,7 +284,7 @@ p_nagA <- ggplot(SE_nagA, aes(x=comparison, y=Relative.expression.to.glucose..co
         text = element_text(size = 8)) +  
   labs(title = "nagA", x = "", y = "Fold Change")+
   scale_fill_brewer(palette="Paired")+
-  stat_compare_means(data=rpoA_nagA,label ="p.signif",
+  stat_compare_means(data=rpoA_nagA,label ="p.format",
                      method = "t.test",show.legend = F,paird=F,size= 3,comparisons = my_comparisons)+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
 
@@ -242,7 +310,7 @@ p_agaS <- ggplot(SE_agaS, aes(x=comparison, y=Relative.expression.to.glucose..co
         text = element_text(size = 8)) +  
   labs(title = "agaS", x = "", y = "Fold Change")+
   scale_fill_brewer(palette="Paired")+
-  stat_compare_means(data=rpoA_agaS,label ="p.signif",
+  stat_compare_means(data=rpoA_agaS,label ="p.format",
                      method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
 
@@ -268,7 +336,7 @@ p_agaF <- ggplot(SE_agaF, aes(x=comparison, y=Relative.expression.to.glucose..co
         text = element_text(size = 8)) +  
   labs(title = "agaF", x = "", y = "Fold Change")+
   scale_fill_brewer(palette="Paired")+
-  stat_compare_means(data=rpoA_agaF,label ="p.signif",
+  stat_compare_means(data=rpoA_agaF,label ="p.format",
                      method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
 
@@ -294,7 +362,7 @@ p_kbaY <- ggplot(SE_kbaY, aes(x=comparison, y=Relative.expression.to.glucose..co
         text = element_text(size = 8)) +  
   labs(title = "gatY-kbaY", x = "", y = "Fold Change")+
   scale_fill_brewer(palette="Paired")+
-  stat_compare_means(data=rpoA_kbaY,label ="p.signif",
+  stat_compare_means(data=rpoA_kbaY,label ="p.format",
                      method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
 
@@ -318,7 +386,7 @@ p_rhaR <- ggplot(SE_rhaR, aes(x=comparison, y=Relative.expression.to.glucose..co
         text = element_text(size = 8)) +  
   labs(title = "rhaR", x = "", y = "Fold Change")+
   scale_fill_brewer(palette="Paired")+
-  stat_compare_means(data=rpoA_rhaR,label ="p.signif",
+  stat_compare_means(data=rpoA_rhaR,label ="p.format",
                      method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
 
@@ -344,7 +412,7 @@ p_agaV <- ggplot(SE_agaV, aes(x=comparison, y=Relative.expression.to.glucose..co
         text = element_text(size = 8)) +  
   labs(title = "agaV", x = "", y = "Fold Change")+
   scale_fill_brewer(palette="Paired")+
-  stat_compare_means(data=rpoA_agaV,label ="p.signif",
+  stat_compare_means(data=rpoA_agaV,label ="p.format",
                      method = "t.test",show.legend = F,paird=F,size= 3,comparisons = my_comparisons)+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
 
@@ -369,7 +437,7 @@ p_agaC <- ggplot(SE_agaC, aes(x=comparison, y=Relative.expression.to.glucose..co
         text = element_text(size = 8)) +  
   labs(title = "agaC", x = "", y = "Fold Change")+
   scale_fill_brewer(palette="Paired")+
-  stat_compare_means(data=rpoA_agaC,label ="p.signif",
+  stat_compare_means(data=rpoA_agaC,label ="p.format",
                      method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
 
@@ -394,7 +462,7 @@ p_agaD <- ggplot(SE_agaD, aes(x=comparison, y=Relative.expression.to.glucose..co
         text = element_text(size = 8)) +  
   labs(title = "agaD", x = "", y = "Fold Change")+
   scale_fill_brewer(palette="Paired")+
-  stat_compare_means(data=rpoA_agaD,label ="p.signif",
+  stat_compare_means(data=rpoA_agaD,label ="p.format",
                      method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
 
@@ -420,13 +488,13 @@ p_immR <- ggplot(SE_immR, aes(x=comparison, y=Relative.expression.to.glucose..co
         text = element_text(size = 8)) +  
   labs(title = "immR", x = "", y = "Fold Change")+
   scale_fill_brewer(palette="Paired")+
-  stat_compare_means(data=rpoA_immR,label ="p.signif",
+  stat_compare_means(data=rpoA_immR,label ="p.format",
                      method = "t.test",show.legend = F,paird=T,size= 3,comparisons = my_comparisons)+
   scale_x_discrete(labels=c('HTF-495','HTF-495', "ATCC27768", "ATCC27768"))
-#p12
+
 
 if(!dir.exists("07.Experiment")){dir.create("07.Experiment")}
-# Extended Data Fig. 7
+# Extended Data Fig. 8
 ggsave("07.Experiment/qPCR_genes_p.pdf",
        grid.arrange (p_agaF, p_agaV, p_agaC, p_agaD, 
                      p_nagA, p_agaS, p_lacC, p_kbaY,
